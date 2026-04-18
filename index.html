@@ -146,17 +146,22 @@
         <p id="status-msg" style="margin-top:20px; color: green; font-weight:bold;"></p>
     </div>
 
-    <script src="webgazer.js" onload="
-        const btn = document.getElementById('start-btn');
-        btn.disabled = false;
-        btn.innerText = '啟動實驗系統';
-        btn.style.background = '#4CAF50';
-        btn.style.color = 'white';
-        btn.style.cursor = 'pointer';
-        btn.style.border = 'none';
-    "></script>
+    <script src="webgazer.js"></script>
 
     <script>
+        // 等待整個網頁都載入完成後，才去解鎖按鈕
+        window.addEventListener('load', function() {
+            const btn = document.getElementById('start-btn');
+            if(btn) {
+                btn.disabled = false;
+                btn.innerText = '啟動實驗系統';
+                btn.style.background = '#4CAF50';
+                btn.style.color = 'white';
+                btn.style.cursor = 'pointer';
+                btn.style.border = 'none';
+            }
+        });
+
         let rawData = [];
         let decisionData = [];
         let isRecording = false;
