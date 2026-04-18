@@ -71,11 +71,11 @@
         <p id="status-msg" style="margin-top:20px; color: green; font-weight:bold;"></p>
     </div>
 
-    <script src="https://unpkg.com/webgazer@2.0.1/dist/webgazer.js" onload="unlockButton()"></script>
+    <script src="https://unpkg.com/webgazer@2.0.1/dist/webgazer.js"></script>
 
     <script>
-        // 解鎖按鈕機制
-        function unlockButton() {
+        // 等待整個網頁的 HTML、圖片和 WebGazer 都載入完成後，再安全地解鎖按鈕
+        window.addEventListener('load', function() {
             const btn = document.getElementById('start-btn');
             if(btn) {
                 btn.disabled = false;
@@ -85,8 +85,8 @@
                 btn.style.cursor = 'pointer';
                 btn.style.border = 'none';
             }
-        }
-
+        });
+    
         let rawData = []; let decisionData = []; let isRecording = false; let validationSamples = []; let isValidating = false; let clickCounts = {};
         let currentRoundIdx = 0; const totalRounds = 10; let taskSequence = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; let userGroup = "control"; 
         const sessionID = "User_" + Date.now();
