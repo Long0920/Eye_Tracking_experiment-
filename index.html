@@ -72,7 +72,7 @@
 <body>
 
     <div id="center-hint">請點擊紅點進行校正</div>
-    <button id="start-btn" onclick="startApp()" style="position:fixed; top:15px; left:20px; z-index:40000;">啟動實驗系統</button>
+    <button id="start-btn" onclick="startApp()" disabled style="position:fixed; top:15px; left:20px; z-index:40000; background:#cccccc; color:#666; cursor:not-allowed; padding: 10px 20px; font-size:16px; border:1px solid #999; border-radius:5px;">AI 模型載入中，請稍候...</button>
 
     <div class="dot" id="pt1" onclick="clickDot(this)"></div>
     <div class="dot" id="pt2" onclick="clickDot(this)"></div>
@@ -146,7 +146,16 @@
         <p id="status-msg" style="margin-top:20px; color: green; font-weight:bold;"></p>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/webgazer@2.2.0/dist/webgazer.js"></script>
+    <script src="webgazer.js" onload="
+        const btn = document.getElementById('start-btn');
+        btn.disabled = false;
+        btn.innerText = '啟動實驗系統';
+        btn.style.background = '#4CAF50';
+        btn.style.color = 'white';
+        btn.style.cursor = 'pointer';
+        btn.style.border = 'none';
+    "></script>
+
     <script>
         let rawData = [];
         let decisionData = [];
@@ -179,9 +188,17 @@
         }
 
         async function startApp() {
+            // 加入防呆保護機制：如果 webgazer 沒有成功載入，跳出警告並終止執行
+            if (typeof webgazer === 'undefined') {
+                alert("⚠️ 錯誤：眼動追蹤 AI 模型載入失敗！\n\n請檢查是否開啟了「廣告攔截器 (AdBlock)」，或是重新整理網頁。");
+                document.getElementById('start-btn').innerText = "載入失敗，請重新整理";
+                return;
+            }
+
             document.getElementById('start-btn').style.display = 'none';
             userGroup = Math.random() > 0.5 ? "treat" : "control";
             shuffle(taskSequence);
+            
             await webgazer.setRegression('ridge').setGazeListener(function(data) {
                 if (data && isRecording) recordGaze(data);
                 if (data && isValidating) {
