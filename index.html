@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>社群媒體研究 - 遠端數據收集系統</title>
     <style>
-        /* 隱藏 WebGazer UI */
+        /* 隱藏 WebGazer 預設的醜醜 UI */
         #webgazerVideoContainer, #webgazerVideoFeed, #webgazerFaceFeedbackBox, 
         #webgazerFaceDot, #plotting_canvas { 
             display: none !important; 
@@ -72,7 +72,8 @@
 <body>
 
     <div id="center-hint">請點擊紅點進行校正</div>
-    <button id="start-btn" onclick="startApp()" disabled style="position:fixed; top:15px; left:20px; z-index:40000; background:#cccccc; color:#666; cursor:not-allowed; padding: 10px 20px; font-size:16px; border:1px solid #999; border-radius:5px;">AI 模型載入中...</button>
+    
+    <button id="start-btn" onclick="startApp()" disabled style="position:fixed; top:15px; left:20px; z-index:40000; background:#cccccc; color:#666; cursor:not-allowed; padding: 10px 20px; font-size:16px; border:1px solid #999; border-radius:5px;">本地 AI 模型載入中...</button>
 
     <div class="dot" id="pt1" onclick="clickDot(this)"></div>
     <div class="dot" id="pt2" onclick="clickDot(this)"></div>
@@ -149,12 +150,12 @@
     <script src="webgazer.js"></script>
 
     <script>
-        // 確保網頁完全讀取後再啟動按鈕，防止白屏報錯
+        // 等待網頁與腳本全部載入完成，解鎖按鈕
         window.addEventListener('load', function() {
             const btn = document.getElementById('start-btn');
             if(btn) {
                 btn.disabled = false;
-                btn.innerText = '啟動實驗系統';
+                btn.innerText = '啟動本地實驗系統';
                 btn.style.background = '#4CAF50';
                 btn.style.color = 'white';
                 btn.style.cursor = 'pointer';
@@ -193,16 +194,15 @@
 
         async function startApp() {
             if (typeof webgazer === 'undefined') {
-                alert("找不到 webgazer.js 檔案，請確認檔案是否有上傳成功！");
+                alert("找不到 webgazer.js，請確認你已將它上傳到 GitHub！");
                 return;
             }
-
-            // 已經將會造成當機的 setStaticRoot 徹底移除
 
             document.getElementById('start-btn').style.display = 'none';
             userGroup = Math.random() > 0.5 ? "treat" : "control";
             shuffle(taskSequence);
             
+            // 啟動 WebGazer（它會自動去找旁邊的 .wasm 和 .data 檔案）
             await webgazer.setRegression('ridge').setGazeListener(function(data) {
                 if (data && isRecording) recordGaze(data);
                 if (data && isValidating) {
