@@ -35,7 +35,7 @@
 </head>
 <body>
     <div id="center-hint">請點擊紅點進行校正</div>
-    <button id="start-btn" onclick="startApp()" disabled style="position:fixed; top:15px; left:20px; z-index:40000; background:#cccccc; color:#666; cursor:not-allowed; padding: 10px 20px; font-size:16px; border:1px solid #999; border-radius:5px;">本地 AI 模型載入中...</button>
+    <button id="start-btn" onclick="startApp()" disabled style="position:fixed; top:15px; left:20px; z-index:40000; background:#cccccc; color:#666; cursor:not-allowed; padding: 10px 20px; font-size:16px; border:1px solid #999; border-radius:5px;">實驗系統準備中...</button>
 
     <div class="dot" id="pt1" onclick="clickDot(this)"></div><div class="dot" id="pt2" onclick="clickDot(this)"></div><div class="dot" id="pt3" onclick="clickDot(this)"></div>
     <div class="dot" id="pt4" onclick="clickDot(this)"></div><div class="dot" id="pt5" onclick="clickDot(this)"></div><div class="dot" id="pt6" onclick="clickDot(this)"></div>
@@ -71,20 +71,21 @@
         <p id="status-msg" style="margin-top:20px; color: green; font-weight:bold;"></p>
     </div>
 
-    <script src="webgazer.js"></script>
+    <script src="https://unpkg.com/webgazer@2.0.1/dist/webgazer.js" onload="unlockButton()"></script>
 
     <script>
-        window.addEventListener('load', function() {
+        // 解鎖按鈕機制
+        function unlockButton() {
             const btn = document.getElementById('start-btn');
             if(btn) {
                 btn.disabled = false;
-                btn.innerText = '啟動本地實驗系統';
+                btn.innerText = '啟動實驗系統';
                 btn.style.background = '#4CAF50';
                 btn.style.color = 'white';
                 btn.style.cursor = 'pointer';
                 btn.style.border = 'none';
             }
-        });
+        }
 
         let rawData = []; let decisionData = []; let isRecording = false; let validationSamples = []; let isValidating = false; let clickCounts = {};
         let currentRoundIdx = 0; const totalRounds = 10; let taskSequence = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; let userGroup = "control"; 
@@ -97,14 +98,14 @@
 
         async function startApp() {
             if (typeof webgazer === 'undefined') {
-                alert("找不到 webgazer.js，請確認檔案與資料夾路徑！");
+                alert("雲端模組載入失敗，請確認網路連線！");
                 return;
             }
             document.getElementById('start-btn').style.display = 'none';
             userGroup = Math.random() > 0.5 ? "treat" : "control";
             shuffle(taskSequence);
             
-            // 啟動 WebGazer
+            // 啟動 2.0.1 版 WebGazer
             await webgazer.setRegression('ridge').setGazeListener(function(data) {
                 if (data && isRecording) recordGaze(data);
                 if (data && isValidating) {
