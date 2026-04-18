@@ -72,7 +72,7 @@
 <body>
 
     <div id="center-hint">請點擊紅點進行校正</div>
-    <button id="start-btn" onclick="startApp()" disabled style="position:fixed; top:15px; left:20px; z-index:40000; background:#cccccc; color:#666; cursor:not-allowed; padding: 10px 20px; font-size:16px; border:1px solid #999; border-radius:5px;">AI 模型載入中，請稍候...</button>
+    <button id="start-btn" onclick="startApp()" disabled style="position:fixed; top:15px; left:20px; z-index:40000; background:#cccccc; color:#666; cursor:not-allowed; padding: 10px 20px; font-size:16px; border:1px solid #999; border-radius:5px;">AI 模型載入中...</button>
 
     <div class="dot" id="pt1" onclick="clickDot(this)"></div>
     <div class="dot" id="pt2" onclick="clickDot(this)"></div>
@@ -146,7 +146,7 @@
         <p id="status-msg" style="margin-top:20px; color: green; font-weight:bold;"></p>
     </div>
 
-    <script src="https://webgazer.cs.brown.edu/webgazer.js" onload="
+    <script src="https://webgazer.cs.brown.edu/webgazer.js?v=2026" onload="
         const btn = document.getElementById('start-btn');
         btn.disabled = false;
         btn.innerText = '啟動實驗系統';
@@ -169,7 +169,6 @@
         let taskSequence = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; 
         let userGroup = "control"; 
         
-        // 建立唯一的 SessionID (受試者識別碼)
         const sessionID = "User_" + Date.now();
         const scriptURL = "https://script.google.com/macros/s/AKfycbwgO-nhnTM31-b0SrF648PGUkiMQBjrwZbT0ejuDIXAl9K0a3O6OJG2wuQi1CfZ50tz1Q/exec";
 
@@ -188,13 +187,10 @@
         }
 
         async function startApp() {
-            // 加入防呆保護機制：如果 webgazer 沒有成功載入，跳出警告並終止執行
             if (typeof webgazer === 'undefined') {
-                alert("⚠️ 錯誤：眼動追蹤 AI 模型載入失敗！\n\n請檢查是否開啟了「廣告攔截器 (AdBlock)」，或是重新整理網頁。");
-                document.getElementById('start-btn').innerText = "載入失敗，請重新整理";
+                alert("AI 模型載入失敗，請確認網路連線或關閉廣告攔截器。");
                 return;
             }
-
             document.getElementById('start-btn').style.display = 'none';
             userGroup = Math.random() > 0.5 ? "treat" : "control";
             shuffle(taskSequence);
@@ -235,7 +231,7 @@
                 isValidating = false;
                 document.getElementById('validation-dot').style.display = 'none';
                 const avgDist = validationSamples.reduce((a, b) => a + b, 0) / validationSamples.length;
-                if (Math.max(0, Math.round(100 - (avgDist / 4))) < 50) {
+                if (Math.max(0, Math.round(100 - (avgDist / 4))) < 40) {
                     alert("精度不足，請重測。");
                     webgazer.clearData(); validationSamples = []; beginCalibration();
                 } else {
@@ -256,7 +252,6 @@
             const taskNum = taskSequence[currentRoundIdx];
             const paddedNum = taskNum.toString().padStart(2, '0');
             const isContentSwapped = Math.random() > 0.5; 
-            const isInteractSwapped = Math.random() > 0.5;
 
             const folder = `Task${paddedNum}_${userGroup}`;
             const fileA = `${folder}_A.png`;
@@ -278,7 +273,7 @@
             if (userGroup === "treat") {
                 const highFile = `Task${paddedNum}_treat_interact_high.png`;
                 const lowFile = `Task${paddedNum}_treat_interact_low.png`;
-                if (isInteractSwapped) {
+                if (Math.random() > 0.5) {
                     intL.src = `interact/${highFile}`; intL.dataset.label = "high";
                     intR.src = `interact/${lowFile}`; intR.dataset.label = "low";
                 } else {
@@ -328,7 +323,6 @@
             const imgR = document.getElementById('img-right');
             const intL = document.getElementById('interact-left');
             const intR = document.getElementById('interact-right');
-            
             let leaningSide = (score < 0) ? "Left" : (score > 0 ? "Right" : "Center");
 
             decisionData.push({
@@ -378,28 +372,19 @@
             });
         }
 
-        // --- 核心修改：網路傳送邏輯 ---
-
         async function uploadEyeData() {
             const btn = document.getElementById('upload-eye-btn');
             btn.innerText = "傳送中...";
             btn.disabled = true;
-
             try {
-                // 將資料分批或一次性傳送
-                const response = await fetch(scriptURL, {
+                await fetch(scriptURL, {
                     method: 'POST',
-                    mode: 'no-cors', // 解決跨網域問題
-                    cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
+                    mode: 'no-cors',
                     body: JSON.stringify({ type: 'eye_data', data: rawData })
                 });
-                
-                document.getElementById('status-msg').innerText = "眼動數據已成功傳送！";
+                document.getElementById('status-msg').innerText = "眼動數據已傳送！";
                 btn.innerText = "傳送成功";
             } catch (error) {
-                console.error('Error:', error);
-                alert("眼動數據傳送失敗，請檢查網路。");
                 btn.disabled = false;
                 btn.innerText = "重新傳送";
             }
@@ -409,21 +394,15 @@
             const btn = document.getElementById('upload-decision-btn');
             btn.innerText = "傳送中...";
             btn.disabled = true;
-
             try {
-                const response = await fetch(scriptURL, {
+                await fetch(scriptURL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ type: 'decision_data', data: decisionData })
                 });
-                
-                document.getElementById('status-msg').innerText = "決策數據已成功傳送！";
+                document.getElementById('status-msg').innerText = "決策數據已傳送！";
                 btn.innerText = "傳送成功";
             } catch (error) {
-                console.error('Error:', error);
-                alert("決策數據傳送失敗，請檢查網路。");
                 btn.disabled = false;
                 btn.innerText = "重新傳送";
             }
