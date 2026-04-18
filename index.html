@@ -149,7 +149,7 @@
     <script src="webgazer.js"></script>
 
     <script>
-        // 【防白屏機制】：等網頁元件全部就位後，才解鎖按鈕
+        // 確保網頁完全讀取後再啟動按鈕，防止白屏報錯
         window.addEventListener('load', function() {
             const btn = document.getElementById('start-btn');
             if(btn) {
@@ -197,8 +197,7 @@
                 return;
             }
 
-            // ⭐ 告訴 WebGazer 你的 AI 模型都在同一個 GitHub 資料夾
-            webgazer.params.setStaticRoot("./");
+            // 已經將會造成當機的 setStaticRoot 徹底移除
 
             document.getElementById('start-btn').style.display = 'none';
             userGroup = Math.random() > 0.5 ? "treat" : "control";
