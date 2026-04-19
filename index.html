@@ -4,12 +4,16 @@
     <meta charset="utf-8">
     <title>社群媒體研究 - 遠端數據收集系統</title>
     <style>
-        /* 🚨 絕對不能用 display: none！改成把畫面變透明並丟到螢幕外，騙過瀏覽器保持鏡頭開啟 */
-        #webgazerVideoContainer, #plotting_canvas { 
-            opacity: 0 !important; 
+        /* 🚨 終極防 Chrome 省電封殺術：縮小到 1 像素，透明度 0.01，藏在最底層 */
+        #webgazerVideoContainer, #webgazerVideoFeed, #webgazerFaceFeedbackBox, 
+        #webgazerFaceDot, #plotting_canvas { 
             position: fixed !important; 
-            top: -9999px !important; 
-            left: -9999px !important;
+            top: 0 !important; 
+            left: 0 !important; 
+            width: 1px !important; 
+            height: 1px !important; 
+            opacity: 0.01 !important; 
+            z-index: -9999 !important; 
             pointer-events: none !important; 
         }
 
@@ -98,7 +102,10 @@
         let rawData = []; let decisionData = []; let isRecording = false; let validationSamples = []; let isValidating = false; let clickCounts = {};
         let currentRoundIdx = 0; const totalRounds = 10; let taskSequence = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; let userGroup = "control"; 
         const sessionID = "User_" + Date.now();
+        
+        // 這裡已經換成你新的 Google Apps Script ID
         const scriptURL = "https://script.google.com/macros/s/AKfycbydETLsefFpPymrO8Zwr7KhHe9x-6kUZfKAaaVpLieENm_SXpUceDccxaYg31pGDyxsLA/exec";
+        
         const testBank = { 1: { question: "這兩篇文章主題跟旅遊有關", answer: "否" }, 4: { question: "這兩篇文章主題跟美軍行動有關", answer: "是" }, 10: { question: "這兩篇文章主題跟小孩補習有關", answer: "否" } };
         let currentTestResult = "N/A";
 
@@ -110,7 +117,6 @@
                 return;
             }
 
-            // 🌟 關鍵行動：清除壞掉的記憶，確保 AI 重新訓練！
             webgazer.clearData();
 
             document.getElementById('start-btn').style.display = 'none';
@@ -118,7 +124,6 @@
             shuffle(taskSequence);
             
             await webgazer.setRegression('ridge').setGazeListener(function(data) {
-                // 如果有抓到資料，才記錄座標
                 if (data && isRecording) recordGaze(data);
                 if (data && isValidating) {
                     const dx = data.x - (window.innerWidth / 2);
@@ -127,7 +132,6 @@
                 }
             }).begin();
             
-            // 關閉畫面上的紅色預測點，讓實驗畫面乾淨
             webgazer.showPredictionPoints(false); 
             beginCalibration();
         }
