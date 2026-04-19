@@ -4,8 +4,15 @@
     <meta charset="utf-8">
     <title>社群媒體研究 - 遠端數據收集系統</title>
     <style>
-        #webgazerVideoContainer, #webgazerVideoFeed, #webgazerFaceFeedbackBox, 
-        #webgazerFaceDot, #plotting_canvas { display: none !important; pointer-events: none !important; }
+        /* 🚨 絕對不能用 display: none！改成把畫面變透明並丟到螢幕外，騙過瀏覽器保持鏡頭開啟 */
+        #webgazerVideoContainer, #plotting_canvas { 
+            opacity: 0 !important; 
+            position: fixed !important; 
+            top: -9999px !important; 
+            left: -9999px !important;
+            pointer-events: none !important; 
+        }
+
         body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; background: #ffffff; color: #333; overflow: hidden; }
         #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; justify-content: center; align-items: center; gap: 40px; padding: 40px; box-sizing: border-box; z-index: 5000; }
         .poster-column { display: flex; flex-direction: column; width: 40vw; height: fit-content; max-height: 90vh; overflow: hidden; gap: 0; font-size: 0; line-height: 0; background: #fff; border: 1px solid #e0e0e0; }
@@ -74,19 +81,20 @@
     <script src="https://unpkg.com/webgazer@2.0.1/dist/webgazer.js"></script>
 
     <script>
-        // 等待整個網頁的 HTML、圖片和 WebGazer 都載入完成後，再安全地解鎖按鈕
         window.addEventListener('load', function() {
-            const btn = document.getElementById('start-btn');
-            if(btn) {
-                btn.disabled = false;
-                btn.innerText = '啟動實驗系統';
-                btn.style.background = '#4CAF50';
-                btn.style.color = 'white';
-                btn.style.cursor = 'pointer';
-                btn.style.border = 'none';
-            }
+            setTimeout(function() {
+                const btn = document.getElementById('start-btn');
+                if(btn) {
+                    btn.disabled = false;
+                    btn.innerText = '啟動實驗系統';
+                    btn.style.background = '#4CAF50';
+                    btn.style.color = 'white';
+                    btn.style.cursor = 'pointer';
+                    btn.style.border = 'none';
+                }
+            }, 1000);
         });
-    
+
         let rawData = []; let decisionData = []; let isRecording = false; let validationSamples = []; let isValidating = false; let clickCounts = {};
         let currentRoundIdx = 0; const totalRounds = 10; let taskSequence = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; let userGroup = "control"; 
         const sessionID = "User_" + Date.now();
@@ -101,12 +109,16 @@
                 alert("雲端模組載入失敗，請確認網路連線！");
                 return;
             }
+
+            // 🌟 關鍵行動：清除壞掉的記憶，確保 AI 重新訓練！
+            webgazer.clearData();
+
             document.getElementById('start-btn').style.display = 'none';
             userGroup = Math.random() > 0.5 ? "treat" : "control";
             shuffle(taskSequence);
             
-            // 啟動 2.0.1 版 WebGazer
             await webgazer.setRegression('ridge').setGazeListener(function(data) {
+                // 如果有抓到資料，才記錄座標
                 if (data && isRecording) recordGaze(data);
                 if (data && isValidating) {
                     const dx = data.x - (window.innerWidth / 2);
@@ -115,6 +127,7 @@
                 }
             }).begin();
             
+            // 關閉畫面上的紅色預測點，讓實驗畫面乾淨
             webgazer.showPredictionPoints(false); 
             beginCalibration();
         }
