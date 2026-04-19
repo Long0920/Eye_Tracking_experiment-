@@ -4,10 +4,7 @@
     <meta charset="utf-8">
     <title>社群媒體研究 - 數據收集系統</title>
     <style>
-        /* * 🚨 注意：已經將原本隱藏 WebGazer UI 的 CSS 刪除！
-         * 改用 JavaScript 中的 WebGazer API 來安全隱藏，避免 0x0 DOM 重繪導致鏡頭斷電當機。
-         */
-
+        /* 已刪除導致鏡頭當機的 display: none CSS，改由 WebGazer API 控制 */
         body { font-family: sans-serif; margin: 0; background: #fff; overflow: hidden; }
         #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #fff; justify-content: center; align-items: center; z-index: 5000; gap: 40px; padding: 40px;}
         .poster-column { width: 40vw; display: flex; flex-direction: column; background: #fff; border: 1px solid #e0e0e0; }
@@ -88,8 +85,9 @@
             userGroup = Math.random() > 0.5 ? "treat" : "control";
             shuffle(taskSequence);
             
-            // 🌟 修正點：使用 WebGazer 官方 API 安全隱藏紅點與臉部追蹤網格
+            // 🌟 鏡頭不斷電 API 設定
             await webgazer.setRegression('ridge')
+                .showVideoPreview(false)     // 安全隱藏影片，避免瀏覽器省電機制切斷電源
                 .showPredictionPoints(false) // 隱藏視線預測紅點
                 .showFaceOverlay(false)      // 隱藏臉部追蹤網格
                 .showFaceFeedbackBox(false)  // 隱藏綠色追蹤方框
@@ -127,10 +125,29 @@
         function showReadyScreen() {
             document.getElementById('ready-msg').innerText = `輪次：${currentRoundIdx + 1} / ${totalRounds} (${userGroup})`;
             document.getElementById('ready-screen').style.display = 'flex'; currentTestResult = "N/A"; 
+            
             const tNum = taskSequence[currentRoundIdx].toString().padStart(2, '0');
-            const fA = `Task${tNum}_${userGroup}_A.png`, fB = `Task${tNum}_${userGroup}_B.png`;
-            document.getElementById('img-left').src = `${userGroup}/${fA}`; document.getElementById('img-left').dataset.file = fA;
-            document.getElementById('img-right').src = `${userGroup}/${fB}`; document.getElementById('img-right').dataset.file = fB;
+            
+            // 🌟 根據你的截圖，重構資料夾路徑與檔名邏輯
+            const folderName = `Task${tNum}_${userGroup}`; // 組合出像 "Task01_control" 的資料夾名稱
+            
+            // 如果你的檔案名稱是完全包含 Task 資訊的 (例如: Task01_control_A.png)，請把下面改成 `${folderName}_A.png`
+            const fA = `A.png`; 
+            const fB = `B.png`; 
+            
+            const imgLeft = document.getElementById('img-left');
+            const imgRight = document.getElementById('img-right');
+            
+            // 載入失敗時的錯誤提示，方便除錯
+            imgLeft.onerror = () => console.error(`找不到左側圖片: ${folderName}/${fA}`);
+            imgRight.onerror = () => console.error(`找不到右側圖片: ${folderName}/${fB}`);
+
+            // 設定 src 路徑與 data-file (供上傳表單記錄用)
+            imgLeft.src = `${folderName}/${fA}`; 
+            imgLeft.dataset.file = `${folderName}/${fA}`;
+            
+            imgRight.src = `${folderName}/${fB}`; 
+            imgRight.dataset.file = `${folderName}/${fB}`;
         }
 
         function runEyeTrackingPhase() {
@@ -160,7 +177,6 @@
 
         function recordGaze(data) { rawData.push({ sessionID: sessionID, round: currentRoundIdx + 1, taskID: taskSequence[currentRoundIdx], group: userGroup, timestamp: Date.now(), x: Math.round(data.x), y: Math.round(data.y), aoi: "Screen", postFile: "N/A", interactLabel: "N/A" }); }
 
-        // 🌟 終極表單送出法：絕對不被擋
         async function uploadEyeData() {
             const btn = document.getElementById('upload-eye-btn'); btn.innerText = "傳送中..."; btn.disabled = true;
             try { 
