@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>社群媒體研究數據收集系統</title>
-    <script src="https://unpkg.com/webgazer@3.5.3/dist/webgazer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/webgazer@3.5.3/dist/webgazer.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; background: white; overflow: hidden; }
         .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
@@ -16,7 +16,6 @@
         #Pt7 { top: 90%; left: 10%; } #Pt8 { top: 90%; left: 50%; } #Pt9 { top: 90%; left: 90%; }
         .btn { padding: 15px 30px; font-size: 20px; cursor: pointer; border: 2px solid #333; background: white; border-radius: 8px; margin: 10px; }
         .scale-btns { display: flex; gap: 5px; margin: 20px 0; }
-        .scale-labels { width: 80%; display: flex; justify-content: space-between; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -24,7 +23,7 @@
     <div id="start-screen" class="screen" style="display: flex;">
         <h1>社群媒體研究：遠端眼動實驗</h1>
         <p>請確保環境光線充足並正對鏡頭。</p>
-        <button class="btn" onclick="setupWebGazer()">啟動實驗並校正</button>
+        <button class="btn" id="start-btn" onclick="setupWebGazer()">啟動實驗並校正</button>
     </div>
 
     <div id="calib-points">
@@ -54,161 +53,13 @@
     <div id="scale-screen" class="screen">
         <h2>您比較認同哪一側的觀點？</h2>
         <div class="scale-btns" id="scale-container"></div>
-        <div class="scale-labels"><span>← 完全認同左側</span><span>中立</span><span>完全認同右側 →</span></div>
+        <div class="scale-labels"><span>← 完全認同左側</span><span>完全認同右側 →</span></div>
     </div>
 
     <div id="finish-screen" class="screen">
         <h1>實驗結束</h1>
-        <p id="status">數據傳輸中，請稍候...</p>
+        <p id="status">數據傳送中，請稍候...</p>
     </div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec";
-        let eyeData = [], decisionData = [], isRecording = false;
-        let roundIdx = 0, calibHits = 0;
-        let taskSeq = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        let userGroup = Math.random() > 0.5 ? "treat" : "control";
-        const sessionID = "GH_" + Date.now();
-
-        const quizzes = {
-            1: { q: "這兩篇文章主題跟旅遊有關嗎？", a: "否" },
-            4: { q: "這兩篇文章主題跟美軍行動有關嗎？", a: "是" },
-            10: { q: "這兩篇文章主題跟小孩補習有關嗎？", a: "否" }
-        };
-
-        async function setupWebGazer() {
-            document.getElementById('start-screen').style.display = 'none';
-            
-            // 🌟 核心修正：強制使用 3.5.3 雲端資源，解決 404 問題
-            try {
-                webgazer.setStaticPath('https://unpkg.com/webgazer@3.5.3/dist/');
-                
-                await webgazer.setRegression('ridge')
-                    .setGazeListener((data) => {
-                        if (data && isRecording) {
-                            eyeData.push({ sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, ts: Date.now(), x: Math.round(data.x), y: Math.round(data.y) });
-                        }
-                    }).begin();
-
-                webgazer.showVideo(true);
-                webgazer.showPredictionPoints(true);
-                startCalib();
-            } catch (err) {
-                console.error("初始化失敗:", err);
-                alert("無法啟動眼動追蹤。請確認：1. 使用 HTTPS 2. 已允許相機權限 3. 網路連線正常");
-            }
-        }
-
-        function startCalib() {
-            calibHits = 0;
-            document.querySelectorAll('.Calibration').forEach(el => { el.style.display = 'block'; el.dataset.n = 0; });
-        }
-
-        function clickCalib(el) {
-            el.dataset.n = parseInt(el.dataset.n) + 1;
-            if (el.dataset.n >= 5) {
-                el.style.display = 'none';
-                calibHits++;
-                if (calibHits >= 9) checkAccuracy();
-            }
-        }
-
-        function checkAccuracy() {
-            const acc = Math.random() * 0.4 + 0.55; 
-            if (acc < 0.5) { alert("校正精度不足，請重新開始。"); startCalib(); }
-            else { 
-                webgazer.showVideo(false); 
-                webgazer.showPredictionPoints(false);
-                shuffle(taskSeq); 
-                runRound(); 
-            }
-        }
-
-        function runRound() {
-            if (roundIdx >= taskSeq.length) { uploadAll(); return; }
-
-            const tNum = taskSeq[roundIdx].toString().padStart(2, '0');
-            const folder = `Task${tNum}_${userGroup}`;
-            const flip = Math.random() > 0.5;
-
-            const imgA = `${folder}/Task${tNum}_${userGroup}_A.png`;
-            const imgB = `${folder}/Task${tNum}_${userGroup}_B.png`;
-
-            let intL, intR;
-            if (userGroup === "control") {
-                intL = intR = "interact/none.png";
-            } else {
-                const iFlip = Math.random() > 0.5;
-                intL = `interact/Task${tNum}_treat_interact_${iFlip ? 'high' : 'low'}.png`;
-                intR = `interact/Task${tNum}_treat_interact_${iFlip ? 'low' : 'high'}.png`;
-            }
-
-            document.getElementById('img-L').src = flip ? imgA : imgB;
-            document.getElementById('img-R').src = imgB; // 修正路徑
-            document.getElementById('img-L').src = flip ? imgA : imgB;
-            document.getElementById('img-R').src = flip ? imgB : imgA;
-            document.getElementById('int-L').src = intL;
-            document.getElementById('int-R').src = intR;
-
-            decisionData[roundIdx] = { 
-                sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, 
-                imgL: flip ? imgA : imgB, imgR: flip ? imgB : imgA, 
-                intL: intL, intR: intR, quizRes: "N/A" 
-            };
-
-            document.getElementById('experiment-stage').style.display = 'flex';
-            isRecording = true;
-
-            setTimeout(() => {
-                isRecording = false;
-                document.getElementById('experiment-stage').style.display = 'none';
-                if (quizzes[taskSeq[roundIdx]]) showQuiz(); else showScale();
-            }, 10000);
-        }
-
-        function showQuiz() {
-            document.getElementById('quiz-q').innerText = quizzes[taskSeq[roundIdx]].q;
-            document.getElementById('quiz-screen').style.display = 'flex';
-        }
-
-        function handleQuiz(ans) {
-            decisionData[roundIdx].quizRes = (ans === quizzes[taskSeq[roundIdx]].a) ? "Correct" : "Wrong";
-            document.getElementById('quiz-screen').style.display = 'none';
-            showScale();
-        }
-
-        function showScale() {
-            const cont = document.getElementById('scale-container');
-            cont.innerHTML = "";
-            for(let i=-5; i<=5; i++) {
-                let b = document.createElement('button'); b.className="btn"; b.innerText=i; b.style.minWidth="60px";
-                b.onclick = () => { decisionData[roundIdx].score = i; document.getElementById('scale-screen').style.display='none'; roundIdx++; runRound(); };
-                cont.appendChild(b);
-            }
-            document.getElementById('scale-screen').style.display = 'flex';
-        }
-
-        async function uploadAll() {
-            document.getElementById('finish-screen').style.display = 'flex';
-            webgazer.pause();
-            
-            // 使用 URLSearchParams 配合 no-cors 確保資料能送出
-            const sendData = async (type, payload) => {
-                const form = new URLSearchParams();
-                form.append('data', JSON.stringify({type: type, data: payload}));
-                return fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: form });
-            };
-
-            try {
-                await sendData('eye_data', eyeData);
-                await sendData('decision_data', decisionData);
-                document.getElementById('status').innerText = "數據傳送成功，感謝您的參與！";
-            } catch (err) {
-                document.getElementById('status').innerText = "上傳失敗，請保留此視窗並連繫研究員。";
-            }
-        }
-
-        function shuffle(arr) { arr.sort(() => Math.random() - 0.5); }
-    </script>
-</body>
-</html>
+        const GAS_URL = "
