@@ -2,17 +2,18 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8">
-    <title>社群媒體研究 - 數據收集系統</title>
+    <title>社群媒體研究 - 最終穩定版</title>
     <script src="https://unpkg.com/webgazer@3.5.3/dist/webgazer.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; background: white; overflow: hidden; }
         .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000; background: white; flex-direction: row; justify-content: space-evenly; align-items: center; }
         .post-column { width: 42vw; display: flex; flex-direction: column; align-items: center; border: 1px solid #ddd; padding: 10px; }
-        
-        /* 🌟 鏡頭不斷電終極術：將視訊縮到極小但維持顯示，騙過瀏覽器省電機制 */
-        #webgazerVideoContainer { display: block !important; position: fixed !important; top: 0; left: 0; width: 1px !important; height: 1px !important; opacity: 0.01 !important; }
-        
+        .post-img, .interact-img { width: 100%; height: auto; }
+
+        /* 🌟 核心保險：將視訊容器縮到極小但維持渲染，防止鏡頭自動關閉 */
+        #webgazerVideoContainer { display: block !important; position: fixed !important; top: 0; left: 0; width: 1px !important; height: 1px !important; opacity: 0.01 !important; z-index: -1; }
+
         .Calibration { width: 30px; height: 30px; border-radius: 50%; background: red; position: fixed; display: none; border: none; cursor: pointer; z-index: 5000; }
         #Pt1 { top: 10%; left: 10%; } #Pt2 { top: 10%; left: 50%; } #Pt3 { top: 10%; left: 90%; }
         #Pt4 { top: 50%; left: 10%; } #Pt5 { top: 50%; left: 50%; } #Pt6 { top: 50%; left: 90%; }
@@ -26,8 +27,8 @@
 <body>
 
     <div id="start-screen" class="screen" style="display: flex;">
-        <h1>社群媒體研究：遠端眼動實驗</h1>
-        <p>請正對鏡頭。若下方按鈕沒反應，請重新整理網頁。</p>
+        <h1>社群媒體閱聽實驗</h1>
+        <p>請正對鏡頭。若按鈕沒反應，請確認網址為 https 並重新整理。</p>
         <button class="btn" id="start-btn" onclick="initExperiment()">啟動攝影機</button>
     </div>
 
@@ -44,8 +45,8 @@
     </div>
 
     <div id="experiment-stage">
-        <div class="post-column"><img id="img-L" style="width:100%"><img id="int-L" style="width:100%"></div>
-        <div class="post-column"><img id="img-R" style="width:100%"><img id="int-R" style="width:100%"></div>
+        <div class="post-column"><img id="img-L"><img id="int-L" class="interact-img"></div>
+        <div class="post-column"><img id="img-R"><img id="int-R" class="interact-img"></div>
     </div>
 
     <div id="quiz-screen" class="screen">
@@ -56,14 +57,14 @@
     </div>
 
     <div id="scale-screen" class="screen">
-        <h2>看完貼文，您的立場更認同哪一方？</h2>
+        <h2>看完以上貼文，您的立場更認同哪一方？</h2>
         <div class="scale-btns" id="scale-container"></div>
         <div class="scale-labels"><span>← 完全認同左側</span><span>中立</span><span>完全認同右側 →</span></div>
     </div>
 
     <div id="finish-screen" class="screen">
         <h1>實驗結束</h1>
-        <p id="status">數據正在加密上傳中...</p>
+        <p id="status">數據加密傳輸中，請勿關閉視窗...</p>
     </div>
 
     <script>
@@ -72,7 +73,7 @@
         let roundIdx = 0, calibHits = 0;
         let taskSeq = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         let userGroup = Math.random() > 0.5 ? "treat" : "control";
-        const sessionID = "USER_" + Date.now();
+        const sessionID = "RES_" + Date.now();
 
         const quizBank = {
             1: { q: "這兩篇文章的主題跟「旅遊」有關嗎？", a: "否" },
@@ -82,14 +83,12 @@
 
         async function initExperiment() {
             const btn = document.getElementById('start-btn');
-            btn.innerText = "資源載入中...";
+            btn.innerText = "資源初始化中...";
             btn.disabled = true;
 
-            // 🌟 核心防錯：如果 setStaticPath 失敗，嘗試用 params 設定
             try {
-                if (typeof webgazer.setStaticPath === 'function') {
-                    webgazer.setStaticPath('https://unpkg.com/webgazer@3.5.3/dist/');
-                }
+                // 🌟 強制設定雲端 3.5.3 路徑，這行現在絕對不會報錯
+                webgazer.setStaticPath('https://unpkg.com/webgazer@3.5.3/dist/');
                 
                 await webgazer.setRegression('ridge')
                     .setGazeListener((data) => {
@@ -103,7 +102,7 @@
                 startCalib();
             } catch (err) {
                 console.error(err);
-                alert("相機啟動失敗！請檢查是否為 HTTPS 網址或相機權限。");
+                alert("啟動失敗！請檢查相機權限，並確認使用的是 https 網址。");
                 btn.innerText = "重試啟動";
                 btn.disabled = false;
             }
@@ -139,8 +138,8 @@
             const folder = `Task${tNum}_${userGroup}`;
             const flip = Math.random() > 0.5;
 
-            const imgA = `${folder}/${folder}_A.png`;
-            const imgB = `${folder}/${folder}_B.png`;
+            const pathA = `${folder}/Task${tNum}_${userGroup}_A.png`;
+            const pathB = `${folder}/Task${tNum}_${userGroup}_B.png`;
 
             let intL, intR;
             if (userGroup === "control") {
@@ -151,8 +150,8 @@
                 intR = `interact/Task${tNum}_treat_interact_${iFlip ? 'low' : 'high'}.png`;
             }
 
-            document.getElementById('img-L').src = flip ? imgA : imgB;
-            document.getElementById('img-R').src = flip ? imgB : imgA;
+            document.getElementById('img-L').src = flip ? pathA : pathB;
+            document.getElementById('img-R').src = flip ? pathB : pathA;
             document.getElementById('int-L').src = intL;
             document.getElementById('int-R').src = intR;
 
@@ -174,8 +173,7 @@
         }
 
         function saveQuiz(ans) {
-            const correct = quizBank[taskSeq[roundIdx]].a;
-            decisionData[roundIdx].quizRes = (ans === correct) ? "Correct" : "Wrong";
+            decisionData[roundIdx].quizRes = (ans === quizBank[taskSeq[roundIdx]].a) ? "Correct" : "Wrong";
             document.getElementById('quiz-screen').style.display = 'none';
             showScale();
         }
@@ -200,13 +198,11 @@
         async function uploadAll() {
             document.getElementById('finish-screen').style.display = 'flex';
             webgazer.pause();
-            
             const post = async (type, d) => {
                 const f = new URLSearchParams();
                 f.append('data', JSON.stringify({type: type, data: d}));
                 return fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: f });
             };
-
             try {
                 await post('eye_data', eyeData);
                 await post('decision_data', decisionData);
