@@ -4,7 +4,22 @@
     <meta charset="utf-8">
     <title>社群媒體研究 - 遠端數據收集系統</title>
     <style>
-        /* 🧹 已經刪除所有干擾視訊的 CSS，讓 WebGazer 官方指令接管 */
+        /* 🚨 終極正解：不改大小（讓AI吃飽），只改透明度和層級（騙過Chrome和你的眼睛） */
+        #webgazerVideoContainer, #webgazerVideoFeed { 
+            position: fixed !important; 
+            top: 0 !important; 
+            left: 0 !important; 
+            /* 絕對不能寫 width 或 height，讓它保持原圖大小運算！ */
+            opacity: 0.01 !important; /* 1% 透明度，肉眼看不見，但瀏覽器覺得它還活著 */
+            z-index: -9999 !important; /* 藏在白色背景的最後面 */
+            pointer-events: none !important; 
+        }
+
+        /* 臉部綠框、紅點、繪圖畫布，這些不影響 AI 運算，直接徹底隱藏 */
+        #webgazerFaceFeedbackBox, #webgazerFaceDot, #plotting_canvas {
+            display: none !important;
+            pointer-events: none !important;
+        }
 
         body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; background: #ffffff; color: #333; overflow: hidden; }
         #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; justify-content: center; align-items: center; gap: 40px; padding: 40px; box-sizing: border-box; z-index: 5000; }
@@ -26,221 +41,4 @@
         #pt1 { top: 10%; left: 10%; } #pt2 { top: 10%; left: 50%; } #pt3 { top: 10%; left: 90%; }
         #pt4 { top: 50%; left: 10%; } #pt5 { top: 50%; left: 50%; } #pt6 { top: 50%; left: 90%; }
         #pt7 { top: 90%; left: 10%; } #pt8 { top: 90%; left: 50%; } #pt9 { top: 90%; left: 90%; }
-        #validation-dot { display: none; width: 35px; height: 35px; background: #007bff; border-radius: 50%; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 35000; border: 3px solid white; }
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; z-index: 20000; flex-direction: column; justify-content: center; align-items: center; }
-        .btn { padding: 15px 45px; font-size: 26px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer; }
-        #timer { position: fixed; top: 10px; right: 10px; font-size: 16px; color: #999; z-index: 7000; }
-        #center-hint { position: fixed; top: 35%; left: 50%; transform: translate(-50%, -50%); font-size: 30px; z-index: 10000; text-align: center; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div id="center-hint">請點擊紅點進行校正</div>
-    <button id="start-btn" onclick="startApp()" disabled style="position:fixed; top:15px; left:20px; z-index:40000; background:#cccccc; color:#666; cursor:not-allowed; padding: 10px 20px; font-size:16px; border:1px solid #999; border-radius:5px;">實驗系統準備中...</button>
-
-    <div class="dot" id="pt1" onclick="clickDot(this)"></div><div class="dot" id="pt2" onclick="clickDot(this)"></div><div class="dot" id="pt3" onclick="clickDot(this)"></div>
-    <div class="dot" id="pt4" onclick="clickDot(this)"></div><div class="dot" id="pt5" onclick="clickDot(this)"></div><div class="dot" id="pt6" onclick="clickDot(this)"></div>
-    <div class="dot" id="pt7" onclick="clickDot(this)"></div><div class="dot" id="pt8" onclick="clickDot(this)"></div><div class="dot" id="pt9" onclick="clickDot(this)"></div>
-    <div id="validation-dot"></div>
-
-    <div id="ready-screen" class="overlay">
-        <h2>校正通過</h2>
-        <p id="ready-msg" style="font-size: 24px; margin: 20px 0;"></p>
-        <button class="btn" onclick="runEyeTrackingPhase()">開始觀察 (10秒)</button>
-    </div>
-    <div id="experiment-stage">
-        <div id="timer">10</div>
-        <div class="poster-column"><img class="post-content" id="img-left" src="" data-file=""><img class="interact-bar" id="interact-left" src=""></div>
-        <div class="poster-column"><img class="post-content" id="img-right" src="" data-file=""><img class="interact-bar" id="interact-right" src=""></div>
-    </div>
-    <div id="reading-test-screen">
-        <h2 style="font-size: 36px;">閱讀測驗</h2><p id="test-question"></p>
-        <div class="btn-container"><div class="choice-btn" onclick="submitTest('是')"> 是 </div><div class="choice-btn" onclick="submitTest('否')"> 否 </div></div>
-    </div>
-    <div id="decision-screen">
-        <h2 style="font-size: 32px;">閱讀完畢，請問您較認同哪一個觀點？</h2>
-        <div class="scale-container">
-            <div class="scale-buttons">
-                <button class="scale-btn" onclick="recordDecision(-5)">-5</button><button class="scale-btn" onclick="recordDecision(-4)">-4</button><button class="scale-btn" onclick="recordDecision(-3)">-3</button><button class="scale-btn" onclick="recordDecision(-2)">-2</button><button class="scale-btn" onclick="recordDecision(-1)">-1</button><button class="scale-btn" onclick="recordDecision(0)">0</button><button class="scale-btn" onclick="recordDecision(1)">1</button><button class="scale-btn" onclick="recordDecision(2)">2</button><button class="scale-btn" onclick="recordDecision(3)">3</button><button class="scale-btn" onclick="recordDecision(4)">4</button><button class="scale-btn" onclick="recordDecision(5)">5</button>
-            </div>
-            <div class="scale-labels"><span>← 完全認同左側</span><span>中立</span><span>完全認同右側 →</span></div>
-        </div>
-    </div>
-    <div id="finish-screen" class="overlay">
-        <h1>實驗結束</h1><p>請點擊下方按鈕將數據上傳至雲端伺服器：</p>
-        <div style="display:flex; gap: 20px; margin-top: 30px;"><button class="btn" id="upload-eye-btn" style="background:#007bff;" onclick="uploadEyeData()">傳送眼動數據</button><button class="btn" id="upload-decision-btn" style="background:#6c757d;" onclick="uploadDecisionData()">傳送決策數據</button></div>
-        <p id="status-msg" style="margin-top:20px; color: green; font-weight:bold;"></p>
-    </div>
-
-    <script src="https://unpkg.com/webgazer@2.0.1/dist/webgazer.js"></script>
-
-    <script>
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                const btn = document.getElementById('start-btn');
-                if(btn) {
-                    btn.disabled = false;
-                    btn.innerText = '啟動實驗系統';
-                    btn.style.background = '#4CAF50';
-                    btn.style.color = 'white';
-                    btn.style.cursor = 'pointer';
-                    btn.style.border = 'none';
-                }
-            }, 1000);
-        });
-
-        let rawData = []; let decisionData = []; let isRecording = false; let validationSamples = []; let isValidating = false; let clickCounts = {};
-        let currentRoundIdx = 0; const totalRounds = 10; let taskSequence = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; let userGroup = "control"; 
-        const sessionID = "User_" + Date.now();
-        
-        // 🎯 確認這是你的最新 GAS 網址
-        const scriptURL = "https://script.google.com/macros/s/AKfycbydETLsefFpPymrO8Zwr7KhHe9x-6kUZfKAaaVpLieENm_SXpUceDccxaYg31pGDyxsLA/exec";
-        
-        const testBank = { 1: { question: "這兩篇文章主題跟旅遊有關", answer: "否" }, 4: { question: "這兩篇文章主題跟美軍行動有關", answer: "是" }, 10: { question: "這兩篇文章主題跟小孩補習有關", answer: "否" } };
-        let currentTestResult = "N/A";
-
-        function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
-
-        async function startApp() {
-            if (typeof webgazer === 'undefined') {
-                alert("雲端模組載入失敗，請確認網路連線！");
-                return;
-            }
-
-            webgazer.clearData();
-            document.getElementById('start-btn').style.display = 'none';
-            userGroup = Math.random() > 0.5 ? "treat" : "control";
-            shuffle(taskSequence);
-            
-            // 🌟 這裡是最關鍵的修正：用官方 API 隱藏視訊畫面，取代會弄壞 AI 的 CSS
-            await webgazer.setRegression('ridge')
-                .showVideoPreview(false)      // 官方隱藏攝影機畫面（但背景還是 100% 大小在運算）
-                .showPredictionPoints(false)  // 隱藏紅色預測點
-                .setGazeListener(function(data) {
-                    if (data && isRecording) recordGaze(data);
-                    if (data && isValidating) {
-                        const dx = data.x - (window.innerWidth / 2);
-                        const dy = data.y - (window.innerHeight / 2);
-                        validationSamples.push(Math.sqrt(dx*dx + dy*dy));
-                    }
-                }).begin();
-            
-            beginCalibration();
-        }
-
-        function beginCalibration() {
-            document.getElementById('center-hint').style.display = 'block';
-            document.querySelectorAll('.dot').forEach(dot => { dot.style.display = 'block'; clickCounts[dot.id] = 0; });
-        }
-        function clickDot(el) {
-            clickCounts[el.id]++;
-            if (clickCounts[el.id] >= 5) {
-                el.style.display = 'none';
-                if (document.querySelectorAll('.dot[style*="block"]').length === 0) startValidation();
-            }
-        }
-        function startValidation() {
-            document.getElementById('center-hint').innerText = "請盯著中央點";
-            document.getElementById('validation-dot').style.display = 'block';
-            isValidating = true;
-            setTimeout(() => {
-                isValidating = false;
-                document.getElementById('validation-dot').style.display = 'none';
-                const avgDist = validationSamples.reduce((a, b) => a + b, 0) / validationSamples.length;
-                if (Math.max(0, Math.round(100 - (avgDist / 4))) < 40) {
-                    alert("精度不足，請重測。");
-                    webgazer.clearData(); validationSamples = []; beginCalibration();
-                } else {
-                    document.getElementById('center-hint').style.display = 'none'; showReadyScreen();
-                }
-            }, 3000);
-        }
-        function showReadyScreen() {
-            document.getElementById('ready-msg').innerText = `輪次：${currentRoundIdx + 1} / ${totalRounds} (${userGroup})`;
-            document.getElementById('ready-screen').style.display = 'flex'; currentTestResult = "N/A"; setupRoundImages();
-        }
-        function setupRoundImages() {
-            const taskNum = taskSequence[currentRoundIdx]; const paddedNum = taskNum.toString().padStart(2, '0');
-            const folder = `Task${paddedNum}_${userGroup}`; const fileA = `${folder}_A.png`; const fileB = `${folder}_B.png`;
-            const imgL = document.getElementById('img-left'); const imgR = document.getElementById('img-right');
-            const intL = document.getElementById('interact-left'); const intR = document.getElementById('interact-right');
-            if (Math.random() > 0.5) {
-                imgL.src = `${folder}/${fileB}`; imgL.dataset.file = fileB; imgR.src = `${folder}/${fileA}`; imgR.dataset.file = fileA;
-            } else {
-                imgL.src = `${folder}/${fileA}`; imgL.dataset.file = fileA; imgR.src = `${folder}/${fileB}`; imgR.dataset.file = fileB;
-            }
-            if (userGroup === "treat") {
-                const highFile = `Task${paddedNum}_treat_interact_high.png`; const lowFile = `Task${paddedNum}_treat_interact_low.png`;
-                if (Math.random() > 0.5) { intL.src = `interact/${highFile}`; intL.dataset.label = "high"; intR.src = `interact/${lowFile}`; intR.dataset.label = "low"; } 
-                else { intL.src = `interact/${lowFile}`; intL.dataset.label = "low"; intR.src = `interact/${highFile}`; intR.dataset.label = "high"; }
-            } else {
-                intL.src = `interact/none.png`; intL.dataset.label = "none"; intR.src = `interact/none.png`; intR.dataset.label = "none";
-            }
-        }
-        function runEyeTrackingPhase() {
-            document.getElementById('ready-screen').style.display = 'none'; document.getElementById('experiment-stage').style.display = 'flex';
-            isRecording = true; let timeLeft = 10; document.getElementById('timer').innerText = timeLeft;
-            const timer = setInterval(() => {
-                timeLeft--; document.getElementById('timer').innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timer); isRecording = false; document.getElementById('experiment-stage').style.display = 'none';
-                    const taskNum = taskSequence[currentRoundIdx];
-                    if (testBank[taskNum]) { document.getElementById('test-question').innerText = testBank[taskNum].question; document.getElementById('reading-test-screen').style.display = 'flex'; } 
-                    else { document.getElementById('decision-screen').style.display = 'flex'; }
-                }
-            }, 1000);
-        }
-        function submitTest(userChoice) {
-            const correctAnswer = testBank[taskSequence[currentRoundIdx]].answer;
-            currentTestResult = (userChoice === correctAnswer) ? "Correct" : "Incorrect";
-            document.getElementById('reading-test-screen').style.display = 'none'; document.getElementById('decision-screen').style.display = 'flex';
-        }
-        function recordDecision(score) {
-            decisionData.push({
-                sessionID: sessionID, round: currentRoundIdx + 1, taskID: taskSequence[currentRoundIdx], group: userGroup, choiceScore: score,
-                leaningSide: (score < 0) ? "Left" : (score > 0 ? "Right" : "Center"), leftPost: document.getElementById('img-left').dataset.file,
-                rightPost: document.getElementById('img-right').dataset.file, leftInteract: document.getElementById('interact-left').dataset.label,
-                rightInteract: document.getElementById('interact-right').dataset.label, testResult: currentTestResult
-            });
-            document.getElementById('decision-screen').style.display = 'none'; currentRoundIdx++;
-            if (currentRoundIdx < totalRounds) showReadyScreen(); else { webgazer.pause(); document.getElementById('finish-screen').style.display = 'flex'; }
-        }
-        function recordGaze(data) {
-            const x = Math.round(data.x); const y = Math.round(data.y);
-            const rLC = document.getElementById('img-left').getBoundingClientRect(); const rLI = document.getElementById('interact-left').getBoundingClientRect();
-            const rRC = document.getElementById('img-right').getBoundingClientRect(); const rRI = document.getElementById('interact-right').getBoundingClientRect();
-            let aoi = "Background", postFile = "None", interactLabel = "None";
-            if (x >= rLC.left && x <= rLC.right && y >= rLC.top && y <= rLC.bottom) { aoi = "Left_Content"; postFile = document.getElementById('img-left').dataset.file; } 
-            else if (x >= rLI.left && x <= rLI.right && y >= rLI.top && y <= rLI.bottom) { aoi = "Left_Interact"; interactLabel = document.getElementById('interact-left').dataset.label; } 
-            else if (x >= rRC.left && x <= rRC.right && y >= rRC.top && y <= rRC.bottom) { aoi = "Right_Content"; postFile = document.getElementById('img-right').dataset.file; } 
-            else if (x >= rRI.left && x <= rRI.right && y >= rRI.top && y <= rRI.bottom) { aoi = "Right_Interact"; interactLabel = document.getElementById('interact-right').dataset.label; }
-            rawData.push({ sessionID: sessionID, round: currentRoundIdx + 1, taskID: taskSequence[currentRoundIdx], group: userGroup, timestamp: Date.now(), x, y, aoi, postFile, interactLabel });
-        }
-        
-        // 🌟 關鍵修正：加上純文字偽裝 Header，確保 Google 乖乖吞下資料
-        async function uploadEyeData() {
-            const btn = document.getElementById('upload-eye-btn'); btn.innerText = "傳送中..."; btn.disabled = true;
-            try { 
-                await fetch(scriptURL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 假裝成純文字，避開被攔截
-                    body: JSON.stringify({ type: 'eye_data', data: rawData }) 
-                }); 
-                document.getElementById('status-msg').innerText = "眼動數據已成功傳送！"; btn.innerText = "傳送成功"; 
-            } catch (error) { btn.disabled = false; btn.innerText = "重新傳送"; }
-        }
-        async function uploadDecisionData() {
-            const btn = document.getElementById('upload-decision-btn'); btn.innerText = "傳送中..."; btn.disabled = true;
-            try { 
-                await fetch(scriptURL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 假裝成純文字，避開被攔截
-                    body: JSON.stringify({ type: 'decision_data', data: decisionData }) 
-                }); 
-                document.getElementById('status-msg').innerText = "決策數據已成功傳送！"; btn.innerText = "傳送成功"; 
-            } catch (error) { btn.disabled = false; btn.innerText = "重新傳送"; }
-        }
-    </script>
-</body>
-</html>
+        #validation-dot { display: none; width: 35px; height: 35px; background: #007bff; border-radius: 50%; position: fixed; top: 50%; left: 50
