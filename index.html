@@ -4,31 +4,7 @@
     <meta charset="utf-8">
     <title>社群媒體研究 - 遠端數據收集系統</title>
     <style>
-        /* 🚨 終極防 Chrome 省電封殺術：變成右上角的微透明 5px 小點 */
-        #webgazerVideoContainer { 
-            display: block !important; 
-            position: fixed !important; 
-            top: 5px !important; 
-            right: 5px !important; 
-            width: 5px !important; 
-            height: 5px !important; 
-            opacity: 0.1 !important; /* 讓它有一點點存在感，騙過 Chrome */
-            border-radius: 50% !important;
-            overflow: hidden !important; /* 裁切掉超過 5px 的部分 */
-            z-index: 99999 !important; 
-            pointer-events: none !important; 
-        }
-
-        /* 真正的視訊畫面維持原狀，不准隱藏，否則鏡頭會斷 */
-        #webgazerVideoFeed {
-            display: block !important;
-        }
-
-        /* 把臉部綠框、紅點、繪圖畫布這些多餘的 UI 徹底隱藏 */
-        #webgazerFaceFeedbackBox, #webgazerFaceDot, #plotting_canvas {
-            display: none !important;
-            pointer-events: none !important;
-        }
+        /* 🧹 已經刪除所有干擾視訊的 CSS，讓 WebGazer 官方指令接管 */
 
         body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; background: #ffffff; color: #333; overflow: hidden; }
         #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; justify-content: center; align-items: center; gap: 40px; padding: 40px; box-sizing: border-box; z-index: 5000; }
@@ -116,7 +92,7 @@
         let currentRoundIdx = 0; const totalRounds = 10; let taskSequence = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; let userGroup = "control"; 
         const sessionID = "User_" + Date.now();
         
-        // Google Apps Script 網址
+        // 🎯 確認這是你的最新 GAS 網址
         const scriptURL = "https://script.google.com/macros/s/AKfycbydETLsefFpPymrO8Zwr7KhHe9x-6kUZfKAaaVpLieENm_SXpUceDccxaYg31pGDyxsLA/exec";
         
         const testBank = { 1: { question: "這兩篇文章主題跟旅遊有關", answer: "否" }, 4: { question: "這兩篇文章主題跟美軍行動有關", answer: "是" }, 10: { question: "這兩篇文章主題跟小孩補習有關", answer: "否" } };
@@ -131,21 +107,23 @@
             }
 
             webgazer.clearData();
-
             document.getElementById('start-btn').style.display = 'none';
             userGroup = Math.random() > 0.5 ? "treat" : "control";
             shuffle(taskSequence);
             
-            await webgazer.setRegression('ridge').setGazeListener(function(data) {
-                if (data && isRecording) recordGaze(data);
-                if (data && isValidating) {
-                    const dx = data.x - (window.innerWidth / 2);
-                    const dy = data.y - (window.innerHeight / 2);
-                    validationSamples.push(Math.sqrt(dx*dx + dy*dy));
-                }
-            }).begin();
+            // 🌟 這裡是最關鍵的修正：用官方 API 隱藏視訊畫面，取代會弄壞 AI 的 CSS
+            await webgazer.setRegression('ridge')
+                .showVideoPreview(false)      // 官方隱藏攝影機畫面（但背景還是 100% 大小在運算）
+                .showPredictionPoints(false)  // 隱藏紅色預測點
+                .setGazeListener(function(data) {
+                    if (data && isRecording) recordGaze(data);
+                    if (data && isValidating) {
+                        const dx = data.x - (window.innerWidth / 2);
+                        const dy = data.y - (window.innerHeight / 2);
+                        validationSamples.push(Math.sqrt(dx*dx + dy*dy));
+                    }
+                }).begin();
             
-            webgazer.showPredictionPoints(false); 
             beginCalibration();
         }
 
@@ -237,15 +215,31 @@
             else if (x >= rRI.left && x <= rRI.right && y >= rRI.top && y <= rRI.bottom) { aoi = "Right_Interact"; interactLabel = document.getElementById('interact-right').dataset.label; }
             rawData.push({ sessionID: sessionID, round: currentRoundIdx + 1, taskID: taskSequence[currentRoundIdx], group: userGroup, timestamp: Date.now(), x, y, aoi, postFile, interactLabel });
         }
+        
+        // 🌟 關鍵修正：加上純文字偽裝 Header，確保 Google 乖乖吞下資料
         async function uploadEyeData() {
             const btn = document.getElementById('upload-eye-btn'); btn.innerText = "傳送中..."; btn.disabled = true;
-            try { await fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'eye_data', data: rawData }) }); document.getElementById('status-msg').innerText = "眼動數據已成功傳送！"; btn.innerText = "傳送成功"; } 
-            catch (error) { btn.disabled = false; btn.innerText = "重新傳送"; }
+            try { 
+                await fetch(scriptURL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 假裝成純文字，避開被攔截
+                    body: JSON.stringify({ type: 'eye_data', data: rawData }) 
+                }); 
+                document.getElementById('status-msg').innerText = "眼動數據已成功傳送！"; btn.innerText = "傳送成功"; 
+            } catch (error) { btn.disabled = false; btn.innerText = "重新傳送"; }
         }
         async function uploadDecisionData() {
             const btn = document.getElementById('upload-decision-btn'); btn.innerText = "傳送中..."; btn.disabled = true;
-            try { await fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'decision_data', data: decisionData }) }); document.getElementById('status-msg').innerText = "決策數據已成功傳送！"; btn.innerText = "傳送成功"; } 
-            catch (error) { btn.disabled = false; btn.innerText = "重新傳送"; }
+            try { 
+                await fetch(scriptURL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 假裝成純文字，避開被攔截
+                    body: JSON.stringify({ type: 'decision_data', data: decisionData }) 
+                }); 
+                document.getElementById('status-msg').innerText = "決策數據已成功傳送！"; btn.innerText = "傳送成功"; 
+            } catch (error) { btn.disabled = false; btn.innerText = "重新傳送"; }
         }
     </script>
 </body>
