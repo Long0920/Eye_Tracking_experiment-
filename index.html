@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>社群媒體研究數據收集系統</title>
-    <script src="webgazer.js"></script>
+    <script src="https://unpkg.com/webgazer@3.5.3/dist/webgazer.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; background: white; overflow: hidden; }
         .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
@@ -59,7 +59,7 @@
 
     <div id="finish-screen" class="screen">
         <h1>實驗結束</h1>
-        <p id="status">數據傳送中...</p>
+        <p id="status">數據傳輸中，請稍候...</p>
     </div>
 
     <script>
@@ -76,26 +76,29 @@
             10: { q: "這兩篇文章主題跟小孩補習有關嗎？", a: "否" }
         };
 
-        // 🌟 修正 GitHub 404 的核心邏輯
         async function setupWebGazer() {
             document.getElementById('start-screen').style.display = 'none';
             
-            // 重要：告訴 WebGazer 資源就在「目前這個網頁的資料夾」下
-            const basePath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-            webgazer.setStaticPath(basePath);
+            // 🌟 核心修正：強制使用 3.5.3 雲端資源，解決 404 問題
+            try {
+                webgazer.setStaticPath('https://unpkg.com/webgazer@3.5.3/dist/');
+                
+                await webgazer.setRegression('ridge')
+                    .setGazeListener((data) => {
+                        if (data && isRecording) {
+                            eyeData.push({ sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, ts: Date.now(), x: Math.round(data.x), y: Math.round(data.y) });
+                        }
+                    }).begin();
 
-            await webgazer.setRegression('ridge')
-                .setGazeListener((data) => {
-                    if (data && isRecording) {
-                        eyeData.push({ sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, ts: Date.now(), x: Math.round(data.x), y: Math.round(data.y) });
-                    }
-                }).begin();
-
-            webgazer.showVideo(true);
-            startCalib();
+                webgazer.showVideo(true);
+                webgazer.showPredictionPoints(true);
+                startCalib();
+            } catch (err) {
+                console.error("初始化失敗:", err);
+                alert("無法啟動眼動追蹤。請確認：1. 使用 HTTPS 2. 已允許相機權限 3. 網路連線正常");
+            }
         }
 
-        // 九點校正
         function startCalib() {
             calibHits = 0;
             document.querySelectorAll('.Calibration').forEach(el => { el.style.display = 'block'; el.dataset.n = 0; });
@@ -111,13 +114,16 @@
         }
 
         function checkAccuracy() {
-            // 模擬精確度判斷，大於 0.5 通過
-            const acc = Math.random() * 0.4 + 0.55;
-            if (acc < 0.5) { alert("校正精準度不足，請重來。"); startCalib(); }
-            else { webgazer.showVideo(false); shuffle(taskSeq); runRound(); }
+            const acc = Math.random() * 0.4 + 0.55; 
+            if (acc < 0.5) { alert("校正精度不足，請重新開始。"); startCalib(); }
+            else { 
+                webgazer.showVideo(false); 
+                webgazer.showPredictionPoints(false);
+                shuffle(taskSeq); 
+                runRound(); 
+            }
         }
 
-        // 實驗輪次
         function runRound() {
             if (roundIdx >= taskSeq.length) { uploadAll(); return; }
 
@@ -125,7 +131,6 @@
             const folder = `Task${tNum}_${userGroup}`;
             const flip = Math.random() > 0.5;
 
-            // 抓取圖片路徑
             const imgA = `${folder}/Task${tNum}_${userGroup}_A.png`;
             const imgB = `${folder}/Task${tNum}_${userGroup}_B.png`;
 
@@ -139,11 +144,17 @@
             }
 
             document.getElementById('img-L').src = flip ? imgA : imgB;
+            document.getElementById('img-R').src = imgB; // 修正路徑
+            document.getElementById('img-L').src = flip ? imgA : imgB;
             document.getElementById('img-R').src = flip ? imgB : imgA;
             document.getElementById('int-L').src = intL;
             document.getElementById('int-R').src = intR;
 
-            decisionData[roundIdx] = { sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, imgL: document.getElementById('img-L').src, imgR: document.getElementById('img-R').src, quizRes: "N/A" };
+            decisionData[roundIdx] = { 
+                sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, 
+                imgL: flip ? imgA : imgB, imgR: flip ? imgB : imgA, 
+                intL: intL, intR: intR, quizRes: "N/A" 
+            };
 
             document.getElementById('experiment-stage').style.display = 'flex';
             isRecording = true;
@@ -170,20 +181,31 @@
             const cont = document.getElementById('scale-container');
             cont.innerHTML = "";
             for(let i=-5; i<=5; i++) {
-                let b = document.createElement('button'); b.className="btn"; b.innerText=i;
+                let b = document.createElement('button'); b.className="btn"; b.innerText=i; b.style.minWidth="60px";
                 b.onclick = () => { decisionData[roundIdx].score = i; document.getElementById('scale-screen').style.display='none'; roundIdx++; runRound(); };
                 cont.appendChild(b);
             }
             document.getElementById('scale-screen').style.display = 'flex';
         }
 
-        // 上傳
         async function uploadAll() {
             document.getElementById('finish-screen').style.display = 'flex';
             webgazer.pause();
-            await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({data: JSON.stringify({type: 'eye_data', data: eyeData})}) });
-            await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({data: JSON.stringify({type: 'decision_data', data: decisionData})}) });
-            document.getElementById('status').innerText = "數據傳送成功，感謝參與！";
+            
+            // 使用 URLSearchParams 配合 no-cors 確保資料能送出
+            const sendData = async (type, payload) => {
+                const form = new URLSearchParams();
+                form.append('data', JSON.stringify({type: type, data: payload}));
+                return fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: form });
+            };
+
+            try {
+                await sendData('eye_data', eyeData);
+                await sendData('decision_data', decisionData);
+                document.getElementById('status').innerText = "數據傳送成功，感謝您的參與！";
+            } catch (err) {
+                document.getElementById('status').innerText = "上傳失敗，請保留此視窗並連繫研究員。";
+            }
         }
 
         function shuffle(arr) { arr.sort(() => Math.random() - 0.5); }
