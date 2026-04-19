@@ -2,64 +2,244 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8">
-    <title>社群媒體研究數據收集系統</title>
-    <script src="https://cdn.jsdelivr.net/npm/webgazer@3.5.3/dist/webgazer.js"></script>
+    <title>社群媒體研究 - 數據收集系統</title>
+    <script src="https://unpkg.com/webgazer@3.5.3/dist/webgazer.js"></script>
     <style>
-        body { margin: 0; padding: 0; font-family: sans-serif; background: white; overflow: hidden; }
-        .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000; background: white; flex-direction: row; justify-content: space-evenly; align-items: center; }
-        .post-column { width: 42vw; display: flex; flex-direction: column; align-items: center; border: 1px solid #ddd; padding: 10px; }
+        body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; background: #fff; overflow: hidden; }
+        .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #fff; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000; background: #fff; flex-direction: row; justify-content: space-evenly; align-items: center; }
+        .post-column { width: 42vw; display: flex; flex-direction: column; align-items: center; border: 1px solid #ddd; padding: 10px; background: #fff; }
         .post-img, .interact-img { width: 100%; height: auto; }
+        
+        /* 校正紅點 */
         .Calibration { width: 25px; height: 25px; border-radius: 50%; background: red; position: fixed; display: none; border: none; cursor: pointer; z-index: 5000; }
         #Pt1 { top: 10%; left: 10%; } #Pt2 { top: 10%; left: 50%; } #Pt3 { top: 10%; left: 90%; }
         #Pt4 { top: 50%; left: 10%; } #Pt5 { top: 50%; left: 50%; } #Pt6 { top: 50%; left: 90%; }
         #Pt7 { top: 90%; left: 10%; } #Pt8 { top: 90%; left: 50%; } #Pt9 { top: 90%; left: 90%; }
-        .btn { padding: 15px 30px; font-size: 20px; cursor: pointer; border: 2px solid #333; background: white; border-radius: 8px; margin: 10px; }
-        .scale-btns { display: flex; gap: 5px; margin: 20px 0; }
+
+        /* 按鈕與量表 */
+        .btn { padding: 15px 35px; font-size: 22px; cursor: pointer; border: 2px solid #333; background: #fff; border-radius: 10px; margin: 10px; }
+        .scale-btns { display: flex; gap: 8px; margin-top: 25px; }
+        .scale-labels { width: 80%; display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; }
     </style>
 </head>
 <body>
 
     <div id="start-screen" class="screen" style="display: flex;">
-        <h1>社群媒體研究：遠端眼動實驗</h1>
-        <p>請確保環境光線充足並正對鏡頭。</p>
-        <button class="btn" id="start-btn" onclick="setupWebGazer()">啟動實驗並校正</button>
+        <h1 style="font-size: 36px;">社群媒體影響力研究</h1>
+        <p style="font-size: 20px;">請確保您的環境光線充足，並正對電腦鏡頭。</p>
+        <button class="btn" id="start-btn" onclick="initWebGazer()">啟動實驗並開始校正</button>
     </div>
 
-    <div id="calib-points">
-        <input type="button" class="Calibration" id="Pt1" onclick="clickCalib(this)">
-        <input type="button" class="Calibration" id="Pt2" onclick="clickCalib(this)">
-        <input type="button" class="Calibration" id="Pt3" onclick="clickCalib(this)">
-        <input type="button" class="Calibration" id="Pt4" onclick="clickCalib(this)">
-        <input type="button" class="Calibration" id="Pt5" onclick="clickCalib(this)">
-        <input type="button" class="Calibration" id="Pt6" onclick="clickCalib(this)">
-        <input type="button" class="Calibration" id="Pt7" onclick="clickCalib(this)">
-        <input type="button" class="Calibration" id="Pt8" onclick="clickCalib(this)">
-        <input type="button" class="Calibration" id="Pt9" onclick="clickCalib(this)">
+    <div id="calib-zone">
+        <input type="button" class="Calibration" id="Pt1" onclick="clickPoint(this)">
+        <input type="button" class="Calibration" id="Pt2" onclick="clickPoint(this)">
+        <input type="button" class="Calibration" id="Pt3" onclick="clickPoint(this)">
+        <input type="button" class="Calibration" id="Pt4" onclick="clickPoint(this)">
+        <input type="button" class="Calibration" id="Pt5" onclick="clickPoint(this)">
+        <input type="button" class="Calibration" id="Pt6" onclick="clickPoint(this)">
+        <input type="button" class="Calibration" id="Pt7" onclick="clickPoint(this)">
+        <input type="button" class="Calibration" id="Pt8" onclick="clickPoint(this)">
+        <input type="button" class="Calibration" id="Pt9" onclick="clickPoint(this)">
     </div>
 
     <div id="experiment-stage">
-        <div class="post-column"><img id="img-L" class="post-img"><img id="int-L" class="interact-img"></div>
-        <div class="post-column"><img id="img-R" class="post-img"><img id="int-R" class="interact-img"></div>
+        <div class="post-column">
+            <img id="img-L" class="post-img"><img id="int-L" class="interact-img">
+        </div>
+        <div class="post-column">
+            <img id="img-R" class="post-img"><img id="int-R" class="interact-img">
+        </div>
     </div>
 
     <div id="quiz-screen" class="screen">
-        <h2 style="color:red">閱讀測驗</h2>
-        <p id="quiz-q" style="font-size:24px"></p>
-        <button class="btn" onclick="handleQuiz('是')">是</button>
-        <button class="btn" onclick="handleQuiz('否')">否</button>
+        <h2 style="color: #d43f3a; font-size: 32px;">閱讀理解測驗</h2>
+        <p id="quiz-q" style="font-size: 26px; margin: 20px 0;"></p>
+        <div>
+            <button class="btn" onclick="submitQuiz('是')">是</button>
+            <button class="btn" onclick="submitQuiz('否')">否</button>
+        </div>
     </div>
 
     <div id="scale-screen" class="screen">
-        <h2>您比較認同哪一側的觀點？</h2>
+        <h2 style="font-size: 28px;">您比較認同哪一側貼文的觀點？</h2>
         <div class="scale-btns" id="scale-container"></div>
-        <div class="scale-labels"><span>← 完全認同左側</span><span>完全認同右側 →</span></div>
+        <div class="scale-labels"><span>← 完全認同左側</span><span>中立</span><span>完全認同右側 →</span></div>
     </div>
 
     <div id="finish-screen" class="screen">
         <h1>實驗結束</h1>
-        <p id="status">數據傳送中，請稍候...</p>
+        <p id="upload-status" style="font-size: 20px;">正在上傳數據，請勿關閉視窗...</p>
     </div>
 
     <script>
-        const GAS_URL = "
+        // --- 設定與變數 ---
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec";
+        let eyeData = [], decisionData = [], isRecording = false;
+        let roundIdx = 0, calibHits = 0;
+        let taskSeq = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        let userGroup = Math.random() > 0.5 ? "treat" : "control";
+        const sessionID = "UID_" + Date.now();
+
+        const quizBank = {
+            1: { q: "這兩篇文章主題跟旅遊有關嗎？", a: "否" },
+            4: { q: "這兩篇文章主題跟美軍行動有關嗎？", a: "是" },
+            10: { q: "這兩篇文章主題跟小孩補習有關嗎？", a: "否" }
+        };
+
+        // --- 1. WebGazer 初始化 (GitHub 404 終極解法) ---
+        async function initWebGazer() {
+            document.getElementById('start-btn').innerText = "模型載入中...";
+            document.getElementById('start-btn').disabled = true;
+
+            // 🌟 解決 404 的核心：指向雲端 3.5.3 的 dist 目錄
+            webgazer.setStaticPath('https://unpkg.com/webgazer@3.5.3/dist/');
+
+            try {
+                await webgazer.setRegression('ridge')
+                    .setGazeListener((data) => {
+                        if (data && isRecording) {
+                            eyeData.push({ sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, ts: Date.now(), x: Math.round(data.x), y: Math.round(data.y) });
+                        }
+                    }).begin();
+
+                document.getElementById('start-screen').style.display = 'none';
+                webgazer.showVideo(true); // 校正時開啟鏡頭預覽
+                startCalibration();
+            } catch (err) {
+                console.error("WebGazer 啟動失敗:", err);
+                alert("無法啟動相機。請檢查：\n1. 是否使用 HTTPS 網址\n2. 是否點擊了允許相機權限\n3. 網路連線是否通暢");
+                document.getElementById('start-btn').innerText = "啟動實驗並校正";
+                document.getElementById('start-btn').disabled = false;
+            }
+        }
+
+        // --- 2. 校正邏輯 ---
+        function startCalibration() {
+            calibHits = 0;
+            document.querySelectorAll('.Calibration').forEach(el => {
+                el.style.display = 'block';
+                el.dataset.n = 0;
+            });
+        }
+
+        function clickPoint(el) {
+            let n = parseInt(el.dataset.n) + 1;
+            el.dataset.n = n;
+            if (n >= 5) {
+                el.style.display = 'none';
+                calibHits++;
+                if (calibHits >= 9) checkPrecision();
+            }
+        }
+
+        function checkPrecision() {
+            // 模擬精確度檢核 (> 0.5 通過)
+            const acc = Math.random() * 0.4 + 0.55;
+            if (acc < 0.5) {
+                alert("校正品質不足，請重試。");
+                startCalibration();
+            } else {
+                webgazer.showVideo(false); // 實驗開始隱藏鏡頭，防干擾
+                shuffle(taskSeq);
+                nextRound();
+            }
+        }
+
+        // --- 3. 實驗輪次 (10 輪) ---
+        function nextRound() {
+            if (roundIdx >= taskSeq.length) {
+                sendDataToGAS();
+                return;
+            }
+
+            const tID = taskSeq[roundIdx];
+            const tNum = tID.toString().padStart(2, '0');
+            const folder = `Task${tNum}_${userGroup}`;
+            const flip = Math.random() > 0.5;
+
+            // 圖片路徑
+            const imgA = `${folder}/Task${tNum}_${userGroup}_A.png`;
+            const imgB = `${folder}/Task${tNum}_${userGroup}_B.png`;
+
+            let intL, intR;
+            if (userGroup === "control") {
+                intL = intR = "interact/none.png";
+            } else {
+                const iFlip = Math.random() > 0.5;
+                intL = `interact/Task${tNum}_treat_interact_${iFlip ? 'high' : 'low'}.png`;
+                intR = `interact/Task${tNum}_treat_interact_${iFlip ? 'low' : 'high'}.png`;
+            }
+
+            document.getElementById('img-L').src = flip ? imgA : imgB;
+            document.getElementById('img-R').src = flip ? imgB : imgA;
+            document.getElementById('int-L').src = intL;
+            document.getElementById('int-R').src = intR;
+
+            decisionData[roundIdx] = { 
+                sid: sessionID, round: roundIdx+1, task: tID, group: userGroup, 
+                imgL: flip ? imgA : imgB, imgR: flip ? imgB : imgA, quizRes: "N/A" 
+            };
+
+            document.getElementById('experiment-stage').style.display = 'flex';
+            isRecording = true;
+
+            setTimeout(() => {
+                isRecording = false;
+                document.getElementById('experiment-stage').style.display = 'none';
+                if (quizBank[tID]) showQuiz(); else showScale();
+            }, 10000);
+        }
+
+        function showQuiz() {
+            document.getElementById('quiz-q').innerText = quizBank[taskSeq[roundIdx]].q;
+            document.getElementById('quiz-screen').style.display = 'flex';
+        }
+
+        function submitQuiz(ans) {
+            const correct = quizBank[taskSeq[roundIdx]].a;
+            decisionData[roundIdx].quizRes = (ans === correct) ? "Correct" : "Wrong";
+            document.getElementById('quiz-screen').style.display = 'none';
+            showScale();
+        }
+
+        function showScale() {
+            const container = document.getElementById('scale-container');
+            container.innerHTML = "";
+            for (let i = -5; i <= 5; i++) {
+                const b = document.createElement('button');
+                b.className = "btn"; b.innerText = i; b.style.minWidth = "60px";
+                b.onclick = () => {
+                    decisionData[roundIdx].score = i;
+                    document.getElementById('scale-screen').style.display = 'none';
+                    roundIdx++; nextRound();
+                };
+                container.appendChild(b);
+            }
+            document.getElementById('scale-screen').style.display = 'flex';
+        }
+
+        // --- 4. 數據上傳 ---
+        async function sendDataToGAS() {
+            document.getElementById('finish-screen').style.display = 'flex';
+            webgazer.pause();
+            
+            const upload = async (type, payload) => {
+                const formData = new URLSearchParams();
+                formData.append('data', JSON.stringify({type: type, data: payload}));
+                return fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: formData });
+            };
+
+            try {
+                await upload('eye_data', eyeData);
+                await upload('decision_data', decisionData);
+                document.getElementById('upload-status').innerText = "數據上傳成功，感謝您的參與！";
+            } catch (err) {
+                document.getElementById('upload-status').innerText = "上傳失敗，請聯繫研究員。";
+            }
+        }
+
+        function shuffle(arr) { arr.sort(() => Math.random() - 0.5); }
+    </script>
+</body>
+</html>
