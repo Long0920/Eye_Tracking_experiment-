@@ -4,8 +4,9 @@
     <meta charset="utf-8">
     <title>社群媒體研究 - 數據收集系統</title>
     <style>
-        /* 只隱藏紅點和網格，視訊畫面保留原廠預設，絕對不當機 */
-        #webgazerFaceFeedbackBox, #webgazerFaceDot, #plotting_canvas { display: none !important; pointer-events: none !important; }
+        /* * 🚨 注意：已經將原本隱藏 WebGazer UI 的 CSS 刪除！
+         * 改用 JavaScript 中的 WebGazer API 來安全隱藏，避免 0x0 DOM 重繪導致鏡頭斷電當機。
+         */
 
         body { font-family: sans-serif; margin: 0; background: #fff; overflow: hidden; }
         #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #fff; justify-content: center; align-items: center; z-index: 5000; gap: 40px; padding: 40px;}
@@ -87,14 +88,19 @@
             userGroup = Math.random() > 0.5 ? "treat" : "control";
             shuffle(taskSequence);
             
-            await webgazer.setRegression('ridge').setGazeListener(function(data) {
-                if (data && isRecording) recordGaze(data);
-                if (data && isValidating) {
-                    const dx = data.x - (window.innerWidth / 2);
-                    const dy = data.y - (window.innerHeight / 2);
-                    validationSamples.push(Math.sqrt(dx*dx + dy*dy));
-                }
-            }).begin();
+            // 🌟 修正點：使用 WebGazer 官方 API 安全隱藏紅點與臉部追蹤網格
+            await webgazer.setRegression('ridge')
+                .showPredictionPoints(false) // 隱藏視線預測紅點
+                .showFaceOverlay(false)      // 隱藏臉部追蹤網格
+                .showFaceFeedbackBox(false)  // 隱藏綠色追蹤方框
+                .setGazeListener(function(data) {
+                    if (data && isRecording) recordGaze(data);
+                    if (data && isValidating) {
+                        const dx = data.x - (window.innerWidth / 2);
+                        const dy = data.y - (window.innerHeight / 2);
+                        validationSamples.push(Math.sqrt(dx*dx + dy*dy));
+                    }
+                }).begin();
             
             document.getElementById('center-hint').style.display = 'block';
             document.querySelectorAll('.dot').forEach(dot => { dot.style.display = 'block'; clickCounts[dot.id] = 0; });
