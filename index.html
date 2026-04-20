@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>社群媒體研究 - 最終穩定版</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="webgazer.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; background: white; overflow: hidden; }
@@ -87,9 +88,7 @@
             btn.disabled = true;
 
             try {
-                // 🌟 強制設定雲端 3.5.3 路徑，這行現在絕對不會報錯
-                webgazer.setStaticPath('https://unpkg.com/webgazer@3.5.3/dist/');
-                
+                // 已移除會報錯的 webgazer.setStaticPath，直接啟動
                 await webgazer.setRegression('ridge')
                     .setGazeListener((data) => {
                         if (data && isRecording) {
@@ -102,7 +101,7 @@
                 startCalib();
             } catch (err) {
                 console.error(err);
-                alert("啟動失敗！請檢查相機權限，並確認使用的是 https 網址。");
+                alert("啟動失敗！請檢查相機權限，並確認使用的是 https 網址或 localhost 環境。");
                 btn.innerText = "重試啟動";
                 btn.disabled = false;
             }
