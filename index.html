@@ -76,8 +76,7 @@
     </div>
 
     <script>
-        // ⚠️ 記得放上你重新部署後的 GAS 網址
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec";
+        const GAS_URL = "你的新部署網址"; 
         let eyeData = [], decisionData = [], isRecording = false;
         let roundIdx = 0, calibHits = 0;
         let taskSeq = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -86,9 +85,8 @@
 
         let validationSamples = [];
         let isValidating = false;
-        
         let lastGazeTime = 0; 
-        const GAZE_INTERVAL = 50; 
+        const GAZE_INTERVAL = 100; // 🌟 節流：每秒記錄 10 次，非常足夠
 
         const quizBank = {
             1: { q: "這兩篇文章的主題跟「旅遊」有關嗎？", a: "否" },
@@ -96,157 +94,93 @@
             10: { q: "這兩篇文章的主題跟「小孩補習」有關嗎？", a: "否" }
         };
 
-        // 提取檔名的小工具，讓 Excel 報表更好看
-        function getFileName(url) {
-            return url ? url.split('/').pop() : "None";
-        }
+        function getFileName(url) { return url ? url.split('/').pop() : "None"; }
 
         async function initExperiment() {
             const btn = document.getElementById('start-btn');
-            btn.innerText = "資源初始化中...";
-            btn.disabled = true;
-
+            btn.innerText = "資源初始化中..."; btn.disabled = true;
             try {
-                await webgazer.setRegression('ridge')
-                    .setGazeListener((data) => {
-                        let now = Date.now();
-                        
-                        if (data && isRecording) {
-                            if (now - lastGazeTime >= GAZE_INTERVAL) {
-                                const x = Math.round(data.x);
-                                const y = Math.round(data.y);
-                                
-                                // 🌟 加回你原本寫得很棒的 AOI 碰撞偵測邏輯
-                                const rectLContent = document.getElementById('img-L').getBoundingClientRect();
-                                const rectLInteract = document.getElementById('int-L').getBoundingClientRect();
-                                const rectRContent = document.getElementById('img-R').getBoundingClientRect();
-                                const rectRInteract = document.getElementById('int-R').getBoundingClientRect();
-
-                                let aoi = "Background", postFile = "None", interactLabel = "None";
-
-                                if (x >= rectLContent.left && x <= rectLContent.right && y >= rectLContent.top && y <= rectLContent.bottom) {
-                                    aoi = "Left_Content"; postFile = getFileName(document.getElementById('img-L').src);
-                                } else if (x >= rectLInteract.left && x <= rectLInteract.right && y >= rectLInteract.top && y <= rectLInteract.bottom) {
-                                    aoi = "Left_Interact"; interactLabel = getFileName(document.getElementById('int-L').src);
-                                } else if (x >= rectRContent.left && x <= rectRContent.right && y >= rectRContent.top && y <= rectRContent.bottom) {
-                                    aoi = "Right_Content"; postFile = getFileName(document.getElementById('img-R').src);
-                                } else if (x >= rectRInteract.left && x <= rectRInteract.right && y >= rectRInteract.top && y <= rectRInteract.bottom) {
-                                    aoi = "Right_Interact"; interactLabel = getFileName(document.getElementById('int-R').src);
-                                }
-
-                                eyeData.push({ sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, ts: now, x, y, aoi, postFile, interactLabel });
-                                lastGazeTime = now;
+                await webgazer.setRegression('ridge').setGazeListener((data) => {
+                    let now = Date.now();
+                    if (data && isRecording) {
+                        if (now - lastGazeTime >= GAZE_INTERVAL) {
+                            const x = Math.round(data.x); const y = Math.round(data.y);
+                            const rectLContent = document.getElementById('img-L').getBoundingClientRect();
+                            const rectLInteract = document.getElementById('int-L').getBoundingClientRect();
+                            const rectRContent = document.getElementById('img-R').getBoundingClientRect();
+                            const rectRInteract = document.getElementById('int-R').getBoundingClientRect();
+                            let aoi = "Background", postFile = "None", interactLabel = "None";
+                            if (x >= rectLContent.left && x <= rectLContent.right && y >= rectLContent.top && y <= rectLContent.bottom) {
+                                aoi = "Left_Content"; postFile = getFileName(document.getElementById('img-L').src);
+                            } else if (x >= rectLInteract.left && x <= rectLInteract.right && y >= rectLInteract.top && y <= rectLInteract.bottom) {
+                                aoi = "Left_Interact"; interactLabel = getFileName(document.getElementById('int-L').src);
+                            } else if (x >= rectRContent.left && x <= rectRContent.right && y >= rectRContent.top && y <= rectRContent.bottom) {
+                                aoi = "Right_Content"; postFile = getFileName(document.getElementById('img-R').src);
+                            } else if (x >= rectRInteract.left && x <= rectRInteract.right && y >= rectRInteract.top && y <= rectRInteract.bottom) {
+                                aoi = "Right_Interact"; interactLabel = getFileName(document.getElementById('int-R').src);
                             }
+                            eyeData.push({ sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, ts: now, x, y, aoi, postFile, interactLabel });
+                            lastGazeTime = now;
                         }
-                        if (data && isValidating) {
-                            const dx = data.x - (window.innerWidth / 2);
-                            const dy = data.y - (window.innerHeight / 2);
-                            validationSamples.push(Math.sqrt(dx*dx + dy*dy));
-                        }
-                    }).begin();
-
+                    }
+                    if (data && isValidating) {
+                        const dx = data.x - (window.innerWidth / 2);
+                        const dy = data.y - (window.innerHeight / 2);
+                        validationSamples.push(Math.sqrt(dx*dx + dy*dy));
+                    }
+                }).begin();
                 document.getElementById('start-screen').style.display = 'none';
-                webgazer.showVideo(true); 
-                startCalib();
-            } catch (err) {
-                console.error(err);
-                alert("啟動失敗！請檢查相機權限，並確認使用的是 https 網址或 localhost 環境。");
-                btn.innerText = "重試啟動";
-                btn.disabled = false;
-            }
+                webgazer.showVideo(true); startCalib();
+            } catch (err) { alert("啟動失敗！"); btn.disabled = false; }
         }
 
         function startCalib() {
             calibHits = 0;
             document.getElementById('calib-hint').style.display = 'block';
-            document.getElementById('calib-hint').innerText = "請視線跟著游標，點擊畫面上的紅點各 5 次";
-            document.querySelectorAll('.Calibration').forEach(el => {
-                el.style.display = 'block';
-                el.style.opacity = '1';
-                el.style.transform = 'scale(1)';
-                el.dataset.n = 0;
-            });
+            document.querySelectorAll('.Calibration').forEach(el => { el.style.display = 'block'; el.dataset.n = 0; });
         }
 
         function calibClick(el) {
-            let n = parseInt(el.dataset.n) + 1;
-            el.dataset.n = n;
+            let n = parseInt(el.dataset.n) + 1; el.dataset.n = n;
             el.style.opacity = 1 - (n * 0.15);
-            el.style.transform = `scale(${1 - (n * 0.05)})`;
-
-            if (n >= 5) {
-                el.style.display = 'none';
-                calibHits++;
-                if (calibHits >= 9) startValidation(); 
-            }
+            if (n >= 5) { el.style.display = 'none'; calibHits++; if (calibHits >= 9) startValidation(); }
         }
 
         function startValidation() {
-            document.getElementById('calib-hint').innerText = "請死盯著畫面中央的藍點 3 秒鐘";
+            document.getElementById('calib-hint').innerText = "請盯著藍點 3 秒";
             document.getElementById('validation-dot').style.display = 'block';
-            validationSamples = [];
             isValidating = true;
-
             setTimeout(() => {
-                isValidating = false;
-                document.getElementById('validation-dot').style.display = 'none';
-                let avgDist = validationSamples.length > 0 ? validationSamples.reduce((a, b) => a + b, 0) / validationSamples.length : 999;
-                let accuracy = Math.max(0, Math.round(100 - (avgDist / 4)));
-
-                if (accuracy < 50) {
-                    alert(`校正精準度不足 (分數: ${accuracy}/100)。\n請確保頭部保持不動，且視線確實跟著滑鼠游標。我們將重新校正。`);
-                    webgazer.clearData(); 
-                    startCalib();         
-                } else {
-                    document.getElementById('calib-hint').style.display = 'none';
-                    alert(`校正成功！(精準度: ${accuracy}/100)\n準備進入實驗。`);
-                    webgazer.showVideo(false); 
-                    shuffle(taskSeq);
-                    runRound();
-                }
+                isValidating = false; document.getElementById('validation-dot').style.display = 'none';
+                let avgDist = validationSamples.reduce((a, b) => a + b, 0) / validationSamples.length;
+                if (Math.max(0, Math.round(100 - (avgDist / 4))) < 50) { alert("精度不足重測"); startCalib(); }
+                else { document.getElementById('calib-hint').style.display = 'none'; webgazer.showVideo(false); shuffle(taskSeq); runRound(); }
             }, 3000);
         }
 
         function runRound() {
             if (roundIdx >= taskSeq.length) { uploadAll(); return; }
-
-            const tID = taskSeq[roundIdx];
-            const tNum = tID.toString().padStart(2, '0');
-            const folder = `Task${tNum}_${userGroup}`;
-            const flip = Math.random() > 0.5;
-
-            const pathA = `${folder}/Task${tNum}_${userGroup}_A.png`;
-            const pathB = `${folder}/Task${tNum}_${userGroup}_B.png`;
-
+            const tID = taskSeq[roundIdx]; const tNum = tID.toString().padStart(2, '0');
+            const folder = `Task${tNum}_${userGroup}`; const flip = Math.random() > 0.5;
+            document.getElementById('img-L').src = flip ? `${folder}/Task${tNum}_${userGroup}_A.png` : `${folder}/Task${tNum}_${userGroup}_B.png`;
+            document.getElementById('img-R').src = flip ? `${folder}/Task${tNum}_${userGroup}_B.png` : `${folder}/Task${tNum}_${userGroup}_A.png`;
+            
             let intL, intR;
-            if (userGroup === "control") {
-                intL = intR = "interact/none.png";
-            } else {
+            if (userGroup === "control") { intL = intR = "interact/none.png"; }
+            else {
                 const iFlip = Math.random() > 0.5;
                 intL = `interact/Task${tNum}_treat_interact_${iFlip ? 'high' : 'low'}.png`;
                 intR = `interact/Task${tNum}_treat_interact_${iFlip ? 'low' : 'high'}.png`;
             }
+            document.getElementById('int-L').src = intL; document.getElementById('int-R').src = intR;
 
-            document.getElementById('img-L').src = flip ? pathA : pathB;
-            document.getElementById('img-R').src = flip ? pathB : pathA;
-            document.getElementById('int-L').src = intL;
-            document.getElementById('int-R').src = intR;
-
-            // 初始化 DecisionData
-            decisionData[roundIdx] = { 
-                sid: sessionID, round: roundIdx+1, task: tID, group: userGroup, 
-                imgL: "N/A", imgR: "N/A", intL: "N/A", intR: "N/A", 
-                score: "N/A", leaning: "N/A", quizRes: "N/A", ts: "N/A" 
-            };
-
+            decisionData[roundIdx] = { sid: sessionID, round: roundIdx+1, task: tID, group: userGroup };
             document.getElementById('experiment-stage').style.display = 'flex';
             isRecording = true;
-
             setTimeout(() => {
-                isRecording = false;
-                document.getElementById('experiment-stage').style.display = 'none';
+                isRecording = false; document.getElementById('experiment-stage').style.display = 'none';
                 if (quizBank[tID]) showQuiz(); else showScale();
-            }, 10000);
+            }, 30000); // 🌟 正式版 30 秒
         }
 
         function showQuiz() {
@@ -256,57 +190,51 @@
 
         function saveQuiz(ans) {
             decisionData[roundIdx].quizRes = (ans === quizBank[taskSeq[roundIdx]].a) ? "Correct" : "Wrong";
-            document.getElementById('quiz-screen').style.display = 'none';
-            showScale();
+            document.getElementById('quiz-screen').style.display = 'none'; showScale();
         }
 
         function showScale() {
-            const cont = document.getElementById('scale-container');
-            cont.innerHTML = "";
+            const cont = document.getElementById('scale-container'); cont.innerHTML = "";
             for (let i = -5; i <= 5; i++) {
-                let b = document.createElement('button');
-                b.className = "btn"; b.innerText = i; b.style.minWidth = "60px";
+                let b = document.createElement('button'); b.className = "btn"; b.innerText = i;
                 b.onclick = () => {
-                    // 🌟 記錄所有的決策細節，並只擷取檔名
-                    let leaningSide = (i < 0) ? "Left" : (i > 0 ? "Right" : "Center");
                     decisionData[roundIdx].score = i;
-                    decisionData[roundIdx].leaning = leaningSide;
+                    decisionData[roundIdx].leaning = (i < 0) ? "Left" : (i > 0 ? "Right" : "Center");
                     decisionData[roundIdx].imgL = getFileName(document.getElementById('img-L').src);
                     decisionData[roundIdx].imgR = getFileName(document.getElementById('img-R').src);
                     decisionData[roundIdx].intL = getFileName(document.getElementById('int-L').src);
                     decisionData[roundIdx].intR = getFileName(document.getElementById('int-R').src);
-                    decisionData[roundIdx].ts = Date.now(); 
-                    
+                    decisionData[roundIdx].ts = Date.now();
                     document.getElementById('scale-screen').style.display = 'none';
-                    roundIdx++;
-                    runRound();
+                    roundIdx++; runRound();
                 };
                 cont.appendChild(b);
             }
             document.getElementById('scale-screen').style.display = 'flex';
         }
 
+        // 🌟 修改：一次性打包上傳
         async function uploadAll() {
             document.getElementById('finish-screen').style.display = 'flex';
             webgazer.pause();
             
-            const post = async (type, d) => {
-                const payload = JSON.stringify({type: type, data: d});
-                return fetch(GAS_URL, { 
+            const payload = JSON.stringify({
+                sid: sessionID,
+                eye: eyeData,
+                decision: decisionData
+            });
+
+            try {
+                // 發送單一 POST 請求
+                await fetch(GAS_URL, { 
                     method: 'POST', 
                     mode: 'no-cors', 
                     headers: { 'Content-Type': 'text/plain' }, 
                     body: payload 
                 });
-            };
-
-            try {
-                await post('eye_data', eyeData);
-                await post('decision_data', decisionData);
-                document.getElementById('status').innerText = "上傳成功！感謝您的參與。您可以關閉視窗了。";
+                document.getElementById('status').innerText = "上傳成功！感謝參與。";
             } catch (err) {
-                console.error(err);
-                document.getElementById('status').innerText = "上傳雲端失敗！請檢查網路。";
+                document.getElementById('status').innerText = "上傳失敗，請聯絡研究員。";
             }
         }
 
