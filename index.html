@@ -9,8 +9,25 @@
         body { margin: 0; padding: 0; font-family: sans-serif; background: white; overflow: hidden; }
         .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000; background: white; flex-direction: row; justify-content: space-evenly; align-items: center; }
-        .post-column { width: 42vw; display: flex; flex-direction: column; align-items: center; border: 1px solid #ddd; padding: 10px; }
-        .post-img, .interact-img { width: 100%; height: auto; }
+        
+        /* 🌟 修正貼文欄位：無縫排版、移除 padding、設定自然高度 */
+        .post-column { 
+            display: flex; flex-direction: column; 
+            width: 38vw; /* 稍微縮小寬度，避免高度超出一般螢幕 */
+            height: auto; max-height: 95vh;
+            gap: 0; font-size: 0; line-height: 0; 
+            background: #fff; border: 1px solid #ddd; 
+            padding: 0; /* 移除原本的 10px padding 避免產生多餘白邊 */
+        }
+        
+        /* 🌟 確保圖片 100% 貼合外框，絕不變形或產生虛假留白 */
+        .post-column img { 
+            width: 100%; height: auto; display: block; margin: 0; padding: 0; 
+            vertical-align: bottom; background: #fff;
+        }
+        
+        /* 微調邊界，防止有時候互動條與貼文間出現 1px 的白線 */
+        .interact-img { margin-top: -1px; }
 
         /* 🌟 核心保險：將視訊容器縮到極小但維持渲染，防止鏡頭自動關閉 */
         #webgazerVideoContainer { display: block !important; position: fixed !important; top: 0; left: 0; width: 1px !important; height: 1px !important; opacity: 0.01 !important; z-index: -1; }
