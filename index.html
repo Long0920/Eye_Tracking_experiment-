@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8">
-    <title>社群媒體研究 - 最終穩定版</title>
+    <title>社群媒體研究 - 最終穩定版 (測試模式)</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="webgazer.js"></script>
     <style>
@@ -33,7 +33,7 @@
 
     <div id="start-screen" class="screen" style="display: flex;">
         <h1>社群媒體閱聽實驗</h1>
-        <p>請正對鏡頭。若按鈕沒反應，請確認網址為 https 並重新整理。</p>
+        <p>請正對鏡頭。測試模式下每輪觀察時間縮短為 3 秒。</p>
         <button class="btn" id="start-btn" onclick="initExperiment()">啟動攝影機</button>
     </div>
 
@@ -76,17 +76,21 @@
     </div>
 
     <script>
-        const GAS_URL = "你的新部署網址"; 
+        // ⚠️ 請確保使用最新部署的 GAS 網址
+        const GAS_URL = "你的 GAS 部署網址"; 
+        
         let eyeData = [], decisionData = [], isRecording = false;
         let roundIdx = 0, calibHits = 0;
         let taskSeq = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         let userGroup = Math.random() > 0.5 ? "treat" : "control";
-        const sessionID = "RES_" + Date.now();
+        
+        // 🌟 核心修正 1：隨機產生 6 位數字的 sessionID
+        const sessionID = Math.floor(100000 + Math.random() * 900000).toString();
 
         let validationSamples = [];
         let isValidating = false;
         let lastGazeTime = 0; 
-        const GAZE_INTERVAL = 100; // 🌟 節流：每秒記錄 10 次，非常足夠
+        const GAZE_INTERVAL = 100; // 節流：每 100 毫秒記錄一次
 
         const quizBank = {
             1: { q: "這兩篇文章的主題跟「旅遊」有關嗎？", a: "否" },
@@ -110,6 +114,7 @@
                             const rectRContent = document.getElementById('img-R').getBoundingClientRect();
                             const rectRInteract = document.getElementById('int-R').getBoundingClientRect();
                             let aoi = "Background", postFile = "None", interactLabel = "None";
+                            
                             if (x >= rectLContent.left && x <= rectLContent.right && y >= rectLContent.top && y <= rectLContent.bottom) {
                                 aoi = "Left_Content"; postFile = getFileName(document.getElementById('img-L').src);
                             } else if (x >= rectLInteract.left && x <= rectLInteract.right && y >= rectLInteract.top && y <= rectLInteract.bottom) {
@@ -177,10 +182,12 @@
             decisionData[roundIdx] = { sid: sessionID, round: roundIdx+1, task: tID, group: userGroup };
             document.getElementById('experiment-stage').style.display = 'flex';
             isRecording = true;
+
+            // 🌟 核心修正 2：為了測試，將 30000 改為 3000 (3秒)
             setTimeout(() => {
                 isRecording = false; document.getElementById('experiment-stage').style.display = 'none';
                 if (quizBank[tID]) showQuiz(); else showScale();
-            }, 30000); // 🌟 正式版 30 秒
+            }, 3000); 
         }
 
         function showQuiz() {
@@ -213,7 +220,6 @@
             document.getElementById('scale-screen').style.display = 'flex';
         }
 
-        // 🌟 修改：一次性打包上傳
         async function uploadAll() {
             document.getElementById('finish-screen').style.display = 'flex';
             webgazer.pause();
@@ -225,7 +231,6 @@
             });
 
             try {
-                // 發送單一 POST 請求
                 await fetch(GAS_URL, { 
                     method: 'POST', 
                     mode: 'no-cors', 
