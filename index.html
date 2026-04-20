@@ -10,33 +10,20 @@
         .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000; background: white; flex-direction: row; justify-content: space-evenly; align-items: center; }
         
-        /* 🌟 修正貼文欄位：無縫排版、移除 padding、設定自然高度 */
-        .post-column { 
-            display: flex; flex-direction: column; 
-            width: 38vw; 
-            height: auto; max-height: 95vh;
-            gap: 0; font-size: 0; line-height: 0; 
-            background: #fff; border: 1px solid #ddd; 
-            padding: 0; 
-        }
-        
-        /* 🌟 確保圖片 100% 貼合外框，絕不變形或產生虛假留白 */
-        .post-column img { 
-            width: 100%; height: auto; display: block; margin: 0; padding: 0; 
-            vertical-align: bottom; background: #fff;
-        }
-        
-        /* 微調邊界，防止有時候互動條與貼文間出現 1px 的白線 */
+        .post-column { display: flex; flex-direction: column; width: 38vw; height: auto; max-height: 95vh; gap: 0; font-size: 0; line-height: 0; background: #fff; border: 1px solid #ddd; padding: 0; }
+        .post-column img { width: 100%; height: auto; display: block; margin: 0; padding: 0; vertical-align: bottom; background: #fff; }
         .interact-img { margin-top: -1px; }
 
-        /* 🌟 核心保險：將視訊容器縮到極小但維持渲染，防止鏡頭自動關閉 */
         #webgazerVideoContainer { display: block !important; position: fixed !important; top: 0; left: 0; width: 1px !important; height: 1px !important; opacity: 0.01 !important; z-index: -1; }
 
-        .Calibration { width: 30px; height: 30px; border-radius: 50%; background: red; position: fixed; display: none; border: none; cursor: pointer; z-index: 5000; }
+        .Calibration { width: 30px; height: 30px; border-radius: 50%; background: red; position: fixed; display: none; border: none; cursor: pointer; z-index: 5000; transition: opacity 0.2s, transform 0.2s; }
         #Pt1 { top: 10%; left: 10%; } #Pt2 { top: 10%; left: 50%; } #Pt3 { top: 10%; left: 90%; }
         #Pt4 { top: 50%; left: 10%; } #Pt5 { top: 50%; left: 50%; } #Pt6 { top: 50%; left: 90%; }
         #Pt7 { top: 90%; left: 10%; } #Pt8 { top: 90%; left: 50%; } #Pt9 { top: 90%; left: 90%; }
         
+        #validation-dot { display: none; width: 35px; height: 35px; background: #007bff; border-radius: 50%; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5500; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        #calib-hint { display: none; position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: bold; z-index: 6000; background: rgba(255,255,255,0.9); padding: 15px 30px; border-radius: 8px; border: 2px solid #333; }
+
         .btn { padding: 15px 30px; font-size: 22px; cursor: pointer; border: 2px solid #333; background: white; border-radius: 8px; margin: 10px; }
         .scale-btns { display: flex; gap: 8px; margin: 25px 0; }
         .scale-labels { width: 85%; display: flex; justify-content: space-between; font-weight: bold; }
@@ -49,6 +36,9 @@
         <p>請正對鏡頭。若按鈕沒反應，請確認網址為 https 並重新整理。</p>
         <button class="btn" id="start-btn" onclick="initExperiment()">啟動攝影機</button>
     </div>
+
+    <div id="calib-hint">請視線跟著游標，點擊畫面上的紅點各 5 次</div>
+    <div id="validation-dot"></div>
 
     <div id="calib-zone">
         <button class="Calibration" id="Pt1" onclick="calibClick(this)"></button>
@@ -86,7 +76,7 @@
     </div>
 
     <script>
-        // ⚠️ 請確保這裡貼上你最新部署的 GAS 網址
+        // ⚠️ 記得放上你重新部署後的 GAS 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec";
         let eyeData = [], decisionData = [], isRecording = false;
         let roundIdx = 0, calibHits = 0;
@@ -94,11 +84,22 @@
         let userGroup = Math.random() > 0.5 ? "treat" : "control";
         const sessionID = "RES_" + Date.now();
 
+        let validationSamples = [];
+        let isValidating = false;
+        
+        let lastGazeTime = 0; 
+        const GAZE_INTERVAL = 50; 
+
         const quizBank = {
             1: { q: "這兩篇文章的主題跟「旅遊」有關嗎？", a: "否" },
             4: { q: "這兩篇文章的主題跟「美軍行動」有關嗎？", a: "是" },
             10: { q: "這兩篇文章的主題跟「小孩補習」有關嗎？", a: "否" }
         };
+
+        // 提取檔名的小工具，讓 Excel 報表更好看
+        function getFileName(url) {
+            return url ? url.split('/').pop() : "None";
+        }
 
         async function initExperiment() {
             const btn = document.getElementById('start-btn');
@@ -108,8 +109,39 @@
             try {
                 await webgazer.setRegression('ridge')
                     .setGazeListener((data) => {
+                        let now = Date.now();
+                        
                         if (data && isRecording) {
-                            eyeData.push({ sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, ts: Date.now(), x: Math.round(data.x), y: Math.round(data.y) });
+                            if (now - lastGazeTime >= GAZE_INTERVAL) {
+                                const x = Math.round(data.x);
+                                const y = Math.round(data.y);
+                                
+                                // 🌟 加回你原本寫得很棒的 AOI 碰撞偵測邏輯
+                                const rectLContent = document.getElementById('img-L').getBoundingClientRect();
+                                const rectLInteract = document.getElementById('int-L').getBoundingClientRect();
+                                const rectRContent = document.getElementById('img-R').getBoundingClientRect();
+                                const rectRInteract = document.getElementById('int-R').getBoundingClientRect();
+
+                                let aoi = "Background", postFile = "None", interactLabel = "None";
+
+                                if (x >= rectLContent.left && x <= rectLContent.right && y >= rectLContent.top && y <= rectLContent.bottom) {
+                                    aoi = "Left_Content"; postFile = getFileName(document.getElementById('img-L').src);
+                                } else if (x >= rectLInteract.left && x <= rectLInteract.right && y >= rectLInteract.top && y <= rectLInteract.bottom) {
+                                    aoi = "Left_Interact"; interactLabel = getFileName(document.getElementById('int-L').src);
+                                } else if (x >= rectRContent.left && x <= rectRContent.right && y >= rectRContent.top && y <= rectRContent.bottom) {
+                                    aoi = "Right_Content"; postFile = getFileName(document.getElementById('img-R').src);
+                                } else if (x >= rectRInteract.left && x <= rectRInteract.right && y >= rectRInteract.top && y <= rectRInteract.bottom) {
+                                    aoi = "Right_Interact"; interactLabel = getFileName(document.getElementById('int-R').src);
+                                }
+
+                                eyeData.push({ sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, ts: now, x, y, aoi, postFile, interactLabel });
+                                lastGazeTime = now;
+                            }
+                        }
+                        if (data && isValidating) {
+                            const dx = data.x - (window.innerWidth / 2);
+                            const dy = data.y - (window.innerHeight / 2);
+                            validationSamples.push(Math.sqrt(dx*dx + dy*dy));
                         }
                     }).begin();
 
@@ -126,8 +158,12 @@
 
         function startCalib() {
             calibHits = 0;
+            document.getElementById('calib-hint').style.display = 'block';
+            document.getElementById('calib-hint').innerText = "請視線跟著游標，點擊畫面上的紅點各 5 次";
             document.querySelectorAll('.Calibration').forEach(el => {
                 el.style.display = 'block';
+                el.style.opacity = '1';
+                el.style.transform = 'scale(1)';
                 el.dataset.n = 0;
             });
         }
@@ -135,15 +171,40 @@
         function calibClick(el) {
             let n = parseInt(el.dataset.n) + 1;
             el.dataset.n = n;
+            el.style.opacity = 1 - (n * 0.15);
+            el.style.transform = `scale(${1 - (n * 0.05)})`;
+
             if (n >= 5) {
                 el.style.display = 'none';
                 calibHits++;
-                if (calibHits >= 9) {
+                if (calibHits >= 9) startValidation(); 
+            }
+        }
+
+        function startValidation() {
+            document.getElementById('calib-hint').innerText = "請死盯著畫面中央的藍點 3 秒鐘";
+            document.getElementById('validation-dot').style.display = 'block';
+            validationSamples = [];
+            isValidating = true;
+
+            setTimeout(() => {
+                isValidating = false;
+                document.getElementById('validation-dot').style.display = 'none';
+                let avgDist = validationSamples.length > 0 ? validationSamples.reduce((a, b) => a + b, 0) / validationSamples.length : 999;
+                let accuracy = Math.max(0, Math.round(100 - (avgDist / 4)));
+
+                if (accuracy < 50) {
+                    alert(`校正精準度不足 (分數: ${accuracy}/100)。\n請確保頭部保持不動，且視線確實跟著滑鼠游標。我們將重新校正。`);
+                    webgazer.clearData(); 
+                    startCalib();         
+                } else {
+                    document.getElementById('calib-hint').style.display = 'none';
+                    alert(`校正成功！(精準度: ${accuracy}/100)\n準備進入實驗。`);
                     webgazer.showVideo(false); 
                     shuffle(taskSeq);
                     runRound();
                 }
-            }
+            }, 3000);
         }
 
         function runRound() {
@@ -171,7 +232,12 @@
             document.getElementById('int-L').src = intL;
             document.getElementById('int-R').src = intR;
 
-            decisionData[roundIdx] = { sid: sessionID, round: roundIdx+1, task: tID, group: userGroup, imgL: document.getElementById('img-L').src, imgR: document.getElementById('img-R').src, quizRes: "N/A" };
+            // 初始化 DecisionData
+            decisionData[roundIdx] = { 
+                sid: sessionID, round: roundIdx+1, task: tID, group: userGroup, 
+                imgL: "N/A", imgR: "N/A", intL: "N/A", intR: "N/A", 
+                score: "N/A", leaning: "N/A", quizRes: "N/A", ts: "N/A" 
+            };
 
             document.getElementById('experiment-stage').style.display = 'flex';
             isRecording = true;
@@ -201,7 +267,16 @@
                 let b = document.createElement('button');
                 b.className = "btn"; b.innerText = i; b.style.minWidth = "60px";
                 b.onclick = () => {
+                    // 🌟 記錄所有的決策細節，並只擷取檔名
+                    let leaningSide = (i < 0) ? "Left" : (i > 0 ? "Right" : "Center");
                     decisionData[roundIdx].score = i;
+                    decisionData[roundIdx].leaning = leaningSide;
+                    decisionData[roundIdx].imgL = getFileName(document.getElementById('img-L').src);
+                    decisionData[roundIdx].imgR = getFileName(document.getElementById('img-R').src);
+                    decisionData[roundIdx].intL = getFileName(document.getElementById('int-L').src);
+                    decisionData[roundIdx].intR = getFileName(document.getElementById('int-R').src);
+                    decisionData[roundIdx].ts = Date.now(); 
+                    
                     document.getElementById('scale-screen').style.display = 'none';
                     roundIdx++;
                     runRound();
@@ -211,7 +286,6 @@
             document.getElementById('scale-screen').style.display = 'flex';
         }
 
-        // 🌟 修正傳輸方式：改為 Raw JSON 確保大量數據不被截斷
         async function uploadAll() {
             document.getElementById('finish-screen').style.display = 'flex';
             webgazer.pause();
@@ -229,10 +303,10 @@
             try {
                 await post('eye_data', eyeData);
                 await post('decision_data', decisionData);
-                document.getElementById('status').innerText = "上傳成功！感謝您的參與。";
+                document.getElementById('status').innerText = "上傳成功！感謝您的參與。您可以關閉視窗了。";
             } catch (err) {
                 console.error(err);
-                document.getElementById('status').innerText = "上傳失敗，請檢查網路。";
+                document.getElementById('status').innerText = "上傳雲端失敗！請檢查網路。";
             }
         }
 
