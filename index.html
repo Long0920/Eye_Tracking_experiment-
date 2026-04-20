@@ -76,21 +76,21 @@
     </div>
 
     <script>
-        // ⚠️ 請確保使用最新部署的 GAS 網址
-        const GAS_URL = "你的 GAS 部署網址"; 
+        // 🌟 已更換為你測試成功的網址
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec"; 
         
         let eyeData = [], decisionData = [], isRecording = false;
         let roundIdx = 0, calibHits = 0;
         let taskSeq = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         let userGroup = Math.random() > 0.5 ? "treat" : "control";
         
-        // 🌟 核心修正 1：隨機產生 6 位數字的 sessionID
+        // 🌟 隨機產生 6 位數字的 sessionID
         const sessionID = Math.floor(100000 + Math.random() * 900000).toString();
 
         let validationSamples = [];
         let isValidating = false;
         let lastGazeTime = 0; 
-        const GAZE_INTERVAL = 100; // 節流：每 100 毫秒記錄一次
+        const GAZE_INTERVAL = 100; // 每 100 毫秒記錄一次
 
         const quizBank = {
             1: { q: "這兩篇文章的主題跟「旅遊」有關嗎？", a: "否" },
@@ -183,7 +183,7 @@
             document.getElementById('experiment-stage').style.display = 'flex';
             isRecording = true;
 
-            // 🌟 核心修正 2：為了測試，將 30000 改為 3000 (3秒)
+            // 測試模式：每輪觀察 3 秒
             setTimeout(() => {
                 isRecording = false; document.getElementById('experiment-stage').style.display = 'none';
                 if (quizBank[tID]) showQuiz(); else showScale();
@@ -231,6 +231,7 @@
             });
 
             try {
+                // 使用打包後的 payload 進行單次 POST 上傳
                 await fetch(GAS_URL, { 
                     method: 'POST', 
                     mode: 'no-cors', 
