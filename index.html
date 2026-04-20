@@ -85,7 +85,9 @@
         let userGroup = Math.random() > 0.5 ? "treat" : "control";
         
         // 🌟 隨機產生 6 位數字的 sessionID
-        const sessionID = Math.floor(100000 + Math.random() * 900000).toString();
+        const urlParams = new URLSearchParams(window.location.search);
+        const sidFromUrl = urlParams.get('sid');
+        const sessionID = sidFromUrl ? sidFromUrl : "TEST_" + Math.floor(100000 + Math.random() * 900000).toString();
 
         let validationSamples = [];
         let isValidating = false;
