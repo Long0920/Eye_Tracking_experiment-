@@ -13,11 +13,11 @@
         /* 🌟 修正貼文欄位：無縫排版、移除 padding、設定自然高度 */
         .post-column { 
             display: flex; flex-direction: column; 
-            width: 38vw; /* 稍微縮小寬度，避免高度超出一般螢幕 */
+            width: 38vw; 
             height: auto; max-height: 95vh;
             gap: 0; font-size: 0; line-height: 0; 
             background: #fff; border: 1px solid #ddd; 
-            padding: 0; /* 移除原本的 10px padding 避免產生多餘白邊 */
+            padding: 0; 
         }
         
         /* 🌟 確保圖片 100% 貼合外框，絕不變形或產生虛假留白 */
@@ -86,6 +86,7 @@
     </div>
 
     <script>
+        // ⚠️ 請確保這裡貼上你最新部署的 GAS 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec";
         let eyeData = [], decisionData = [], isRecording = false;
         let roundIdx = 0, calibHits = 0;
@@ -105,7 +106,6 @@
             btn.disabled = true;
 
             try {
-                // 已移除會報錯的 webgazer.setStaticPath，直接啟動
                 await webgazer.setRegression('ridge')
                     .setGazeListener((data) => {
                         if (data && isRecording) {
@@ -211,20 +211,28 @@
             document.getElementById('scale-screen').style.display = 'flex';
         }
 
+        // 🌟 修正傳輸方式：改為 Raw JSON 確保大量數據不被截斷
         async function uploadAll() {
             document.getElementById('finish-screen').style.display = 'flex';
             webgazer.pause();
+            
             const post = async (type, d) => {
-                const f = new URLSearchParams();
-                f.append('data', JSON.stringify({type: type, data: d}));
-                return fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: f });
+                const payload = JSON.stringify({type: type, data: d});
+                return fetch(GAS_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'text/plain' }, 
+                    body: payload 
+                });
             };
+
             try {
                 await post('eye_data', eyeData);
                 await post('decision_data', decisionData);
                 document.getElementById('status').innerText = "上傳成功！感謝您的參與。";
             } catch (err) {
-                document.getElementById('status').innerText = "上傳失敗，請聯絡研究員。";
+                console.error(err);
+                document.getElementById('status').innerText = "上傳失敗，請檢查網路。";
             }
         }
 
