@@ -82,7 +82,9 @@
         let eyeData = [], decisionData = [], isRecording = false;
         let roundIdx = 0, calibHits = 0;
         let taskSeq = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        let userGroup = Math.random() > 0.5 ? "treat" : "control";
+        
+        // 🌟 修改處：直接指派為 treat 組，不再隨機分配
+        let userGroup = "treat"; 
         
         // 🌟 隨機產生 6 位數字的 sessionID
         const urlParams = new URLSearchParams(window.location.search);
@@ -172,13 +174,11 @@
             document.getElementById('img-L').src = flip ? `${folder}/Task${tNum}_${userGroup}_A.png` : `${folder}/Task${tNum}_${userGroup}_B.png`;
             document.getElementById('img-R').src = flip ? `${folder}/Task${tNum}_${userGroup}_B.png` : `${folder}/Task${tNum}_${userGroup}_A.png`;
             
-            let intL, intR;
-            if (userGroup === "control") { intL = intR = "interact/none.png"; }
-            else {
-                const iFlip = Math.random() > 0.5;
-                intL = `interact/Task${tNum}_treat_interact_${iFlip ? 'high' : 'low'}.png`;
-                intR = `interact/Task${tNum}_treat_interact_${iFlip ? 'low' : 'high'}.png`;
-            }
+            // 🌟 修改處：移除 control 組判斷，全部視為 treat 載入互動圖片
+            const iFlip = Math.random() > 0.5;
+            let intL = `interact/Task${tNum}_treat_interact_${iFlip ? 'high' : 'low'}.png`;
+            let intR = `interact/Task${tNum}_treat_interact_${iFlip ? 'low' : 'high'}.png`;
+            
             document.getElementById('int-L').src = intL; document.getElementById('int-R').src = intR;
 
             decisionData[roundIdx] = { sid: sessionID, round: roundIdx+1, task: tID, group: userGroup };
