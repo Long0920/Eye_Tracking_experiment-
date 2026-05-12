@@ -2,15 +2,14 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8">
-    <title>社群媒體研究 - 滾動資訊流測試版</title>
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <title>社群媒體研究 - 最終滾動測試版</title>
     <script src="webgazer.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; background: #f0f2f5; overflow: hidden; }
         .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; overflow-y: auto; }
         
         /* 實驗主要舞台 (滾動區域) */
-        #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000; background: #f0f2f5; flex-direction: column; align-items: center; overflow-y: auto; padding-top: 30px; padding-bottom: 50px; }
+        #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000; background: #f0f2f5; flex-direction: column; align-items: center; overflow-y: auto; padding-top: 30px; padding-bottom: 50px; scroll-behavior: smooth; }
         #posts-wrapper { display: flex; flex-direction: column; width: 100%; max-width: 600px; align-items: center; gap: 20px; }
         
         .post-container { width: 100%; background: #fff; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -62,7 +61,7 @@
 
     <div id="experiment-stage">
         <div id="posts-wrapper">
-            <!-- 圖片會由 JS 動態生成在這裡 -->
+            <!-- 圖片動態生成區域 -->
         </div>
         <button class="btn" id="next-round-btn" onclick="nextRound()">下一輪</button>
     </div>
@@ -107,7 +106,7 @@
     </div>
 
     <script>
-        // 🌟 請填入你的 GAS Web App 網址
+        // 🌟 請確認這裡是你的正確 GAS Web App 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec"; 
         
         let eyeData = [];
@@ -117,25 +116,37 @@
         let isValidating = false;
         let validationSamples = [];
         let lastGazeTime = 0; 
-        const GAZE_INTERVAL = 100; // 紀錄頻率
+        const GAZE_INTERVAL = 100; // 每 100 毫秒紀錄一次
         
-        let roundTimeout; // 宣告每輪的計時器變數
+        let roundTimeout; // 控制每輪 45 秒的最大觀看時間
+        
+        // 🌟 滑動標記控制變數
+        let isScrolling = false;
+        let scrollTimeout = null;
+
+        // 監聽實驗舞台的滾動事件
+        document.getElementById('experiment-stage').addEventListener('scroll', () => {
+            if (!isRecording) return;
+            isScrolling = true;
+            clearTimeout(scrollTimeout);
+            
+            // 停止滾動 200 毫秒後解除滑動狀態
+            scrollTimeout = setTimeout(() => {
+                isScrolling = false;
+            }, 200);
+        }, { passive: true });
 
         const urlParams = new URLSearchParams(window.location.search);
         const sidFromUrl = urlParams.get('sid');
         const sessionID = sidFromUrl ? sidFromUrl : "TEST_" + Math.floor(100000 + Math.random() * 900000).toString();
 
-        // ==========================================
-        // 🌟 圖片題庫設定 (取後不放回)
-        // 檔名請根據實際狀況修改
-        // ==========================================
+        // 圖片庫設定
         const imagePools = {
             AD: ['AD_1.png', 'AD_2.png', 'AD_3.png', 'AD_4.png', 'AD_5.png', 'AD_6.png'],
             Daily: ['Daily_1.png', 'Daily_2.png', 'Daily_3.png', 'Daily_4.png', 'Daily_5.png', 'Daily_6.png'],
             Daily2: ['Daily2_1.png', 'Daily2_2.png', 'Daily2_3.png', 'Daily2_4.png', 'Daily2_5.png', 'Daily2_6.png'],
             P_Post: ['P_Post_1.png', 'P_Post_2.png', 'P_Post_3.png', 'P_Post_4.png', 'P_Post_5.png', 'P_Post_6.png']
         };
-        // G_Post 數字庫 (1~6)，抽中後移除該數字，確保同數字只出現一次
         let gPostNumbers = [1, 2, 3, 4, 5, 6]; 
 
         let totalRounds = 6;
@@ -148,21 +159,25 @@
                 await webgazer.setRegression('ridge').setGazeListener((data) => {
                     let now = Date.now();
                     
-                    // 記錄眼動數據
                     if (data && isRecording) {
                         if (now - lastGazeTime >= GAZE_INTERVAL) {
                             const x = Math.round(data.x); const y = Math.round(data.y);
                             let aoi = "Background";
                             let postFile = "None";
                             
-                            // 檢查視線是否在任何一張圖片上
-                            const posts = document.querySelectorAll('.post-container img');
-                            for (let img of posts) {
-                                const rect = img.getBoundingClientRect();
-                                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                                    aoi = "Post";
-                                    postFile = img.dataset.filename;
-                                    break;
+                            // 🌟 判斷是否正在滑動
+                            if (isScrolling) {
+                                aoi = "Scrolling"; // 標記為滑動中
+                            } else {
+                                // 若無滑動，才判斷視線落在哪張圖片上
+                                const posts = document.querySelectorAll('.post-container img');
+                                for (let img of posts) {
+                                    const rect = img.getBoundingClientRect();
+                                    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                                        aoi = "Post";
+                                        postFile = img.dataset.filename;
+                                        break;
+                                    }
                                 }
                             }
                             
@@ -171,7 +186,6 @@
                         }
                     }
 
-                    // 校正驗證
                     if (data && isValidating) {
                         const dx = data.x - (window.innerWidth / 2);
                         const dy = data.y - (window.innerHeight / 2);
@@ -203,7 +217,7 @@
                 isValidating = false; document.getElementById('validation-dot').style.display = 'none';
                 let avgDist = validationSamples.reduce((a, b) => a + b, 0) / validationSamples.length;
                 
-                // 🌟 精度門檻修改為 40
+                // 🌟 校正精度門檻放寬至 40
                 if (Math.max(0, Math.round(100 - (avgDist / 4))) < 40) { 
                     alert("視線偏移較大，請保持頭部穩定並重新校正"); 
                     startCalib(); 
@@ -216,8 +230,7 @@
         }
 
         function loadRound() {
-            // 清除上一輪的計時器，避免互相干擾
-            clearTimeout(roundTimeout);
+            clearTimeout(roundTimeout); // 清除上一輪的計時器
 
             if (currentRound > totalRounds) {
                 isRecording = false;
@@ -228,7 +241,7 @@
 
             let roundImages = [];
 
-            // 1. 從 AD, Daily, Daily2, P_Post 各隨機抽一張並移除 (取後不放回)
+            // 從各資料夾隨機抽取一張
             ['AD', 'Daily', 'Daily2', 'P_Post'].forEach(folder => {
                 let pool = imagePools[folder];
                 if (pool.length > 0) {
@@ -238,43 +251,47 @@
                 }
             });
 
-            // 2. 處理 G_Post 特殊邏輯
+            // 處理 G_Post 特殊邏輯
             if (gPostNumbers.length > 0) {
                 let gIdx = Math.floor(Math.random() * gPostNumbers.length);
-                let gNum = gPostNumbers.splice(gIdx, 1)[0]; // 抽中後移除該數字
-                let isAI = Math.random() > 0.5; // 50% 機率加上 _AI
+                let gNum = gPostNumbers.splice(gIdx, 1)[0];
+                let isAI = Math.random() > 0.5;
                 let gImgName = isAI ? `G_Post_${gNum}_AI.png` : `G_Post_${gNum}.png`;
                 roundImages.push(`G_Post/${gImgName}`);
             }
 
-            // 3. 打亂這 5 張圖片的垂直排序
+            // 圖片隨機排序
             roundImages.sort(() => Math.random() - 0.5);
 
-            // 4. 渲染到畫面上
             const wrapper = document.getElementById('posts-wrapper');
-            wrapper.innerHTML = ''; // 清空上一輪
+            wrapper.innerHTML = '';
             
             roundImages.forEach(src => {
                 let div = document.createElement('div');
                 div.className = 'post-container';
                 let img = document.createElement('img');
                 img.src = src;
-                img.dataset.filename = src.split('/').pop(); // 紀錄純檔名用來做眼動追蹤標記
+                img.dataset.filename = src.split('/').pop();
                 div.appendChild(img);
                 wrapper.appendChild(div);
             });
 
             document.getElementById('experiment-stage').style.display = 'flex';
-            document.getElementById('experiment-stage').scrollTop = 0; // 每一輪回到最上方
-            isRecording = true;
+            document.getElementById('experiment-stage').scrollTop = 0;
+            
+            // 延遲一點點再開啟紀錄，避免換頁瞬間的跳動干擾
+            setTimeout(() => {
+                isRecording = true;
+            }, 300);
 
-            // 🌟 隱藏的 45 秒倒數機制：時間到自動跳轉下一輪
+            // 🌟 45秒自動換頁機制
             roundTimeout = setTimeout(() => {
                 nextRound();
             }, 45000);
         }
 
         function nextRound() {
+            isRecording = false; // 換頁期間暫停紀錄
             currentRound++;
             loadRound();
         }
