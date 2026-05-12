@@ -2,21 +2,24 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8">
-    <title>社群媒體研究 - 最終穩定版 (測試模式)</title>
+    <title>社群媒體研究 - 滾動資訊流測試版</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="webgazer.js"></script>
     <style>
-        body { margin: 0; padding: 0; font-family: sans-serif; background: white; overflow: hidden; }
-        .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000; background: white; flex-direction: row; justify-content: space-evenly; align-items: center; }
+        body { margin: 0; padding: 0; font-family: sans-serif; background: #f0f2f5; overflow: hidden; }
+        .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; overflow-y: auto; }
         
-        .post-column { display: flex; flex-direction: column; width: 38vw; height: auto; max-height: 95vh; gap: 0; font-size: 0; line-height: 0; background: #fff; border: 1px solid #ddd; padding: 0; }
-        .post-column img { width: 100%; height: auto; display: block; margin: 0; padding: 0; vertical-align: bottom; background: #fff; }
-        .interact-img { margin-top: -1px; }
+        /* 實驗主要舞台 (滾動區域) */
+        #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000; background: #f0f2f5; flex-direction: column; align-items: center; overflow-y: auto; padding-top: 30px; padding-bottom: 50px; }
+        #posts-wrapper { display: flex; flex-direction: column; width: 100%; max-width: 600px; align-items: center; gap: 20px; }
+        
+        .post-container { width: 100%; background: #fff; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .post-container img { width: 100%; display: block; margin: 0; padding: 0; }
 
         #webgazerVideoContainer { display: block !important; position: fixed !important; top: 0; left: 0; width: 1px !important; height: 1px !important; opacity: 0.01 !important; z-index: -1; }
 
-        .Calibration { width: 30px; height: 30px; border-radius: 50%; background: red; position: fixed; display: none; border: none; cursor: pointer; z-index: 5000; transition: opacity 0.2s, transform 0.2s; }
+        /* 校正點樣式 */
+        .Calibration { width: 30px; height: 30px; border-radius: 50%; background: red; position: fixed; display: none; border: none; cursor: pointer; z-index: 5000; transition: opacity 0.2s; }
         #Pt1 { top: 10%; left: 10%; } #Pt2 { top: 10%; left: 50%; } #Pt3 { top: 10%; left: 90%; }
         #Pt4 { top: 50%; left: 10%; } #Pt5 { top: 50%; left: 50%; } #Pt6 { top: 50%; left: 90%; }
         #Pt7 { top: 90%; left: 10%; } #Pt8 { top: 90%; left: 50%; } #Pt9 { top: 90%; left: 90%; }
@@ -24,16 +27,21 @@
         #validation-dot { display: none; width: 35px; height: 35px; background: #007bff; border-radius: 50%; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5500; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
         #calib-hint { display: none; position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: bold; z-index: 6000; background: rgba(255,255,255,0.9); padding: 15px 30px; border-radius: 8px; border: 2px solid #333; }
 
-        .btn { padding: 15px 30px; font-size: 22px; cursor: pointer; border: 2px solid #333; background: white; border-radius: 8px; margin: 10px; }
-        .scale-btns { display: flex; gap: 8px; margin: 25px 0; }
-        .scale-labels { width: 85%; display: flex; justify-content: space-between; font-weight: bold; }
+        .btn { padding: 15px 30px; font-size: 20px; cursor: pointer; border: 2px solid #333; background: white; border-radius: 8px; margin: 20px; font-weight: bold; transition: 0.2s; }
+        .btn:hover { background: #eee; }
+        
+        /* 問卷樣式 */
+        .survey-q { text-align: left; max-width: 600px; width: 90%; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #ddd; }
+        .survey-q h3 { margin-top: 0; font-size: 18px; }
+        .survey-q label { display: block; margin: 10px 0; font-size: 16px; cursor: pointer; }
+        .survey-q select { font-size: 16px; padding: 5px; width: 100%; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div id="start-screen" class="screen" style="display: flex;">
         <h1>社群媒體閱聽實驗</h1>
-        <p>請正對鏡頭。測試模式下每輪觀察時間縮短為 3 秒。</p>
+        <p>請正對鏡頭。系統將進行眼動校正。</p>
         <button class="btn" id="start-btn" onclick="initExperiment()">啟動攝影機</button>
     </div>
 
@@ -53,21 +61,44 @@
     </div>
 
     <div id="experiment-stage">
-        <div class="post-column"><img id="img-L"><img id="int-L" class="interact-img"></div>
-        <div class="post-column"><img id="img-R"><img id="int-R" class="interact-img"></div>
+        <div id="posts-wrapper">
+            <!-- 圖片會由 JS 動態生成在這裡 -->
+        </div>
+        <button class="btn" id="next-round-btn" onclick="nextRound()">下一輪</button>
     </div>
 
-    <div id="quiz-screen" class="screen">
-        <h2 style="color:red">閱讀測驗</h2>
-        <p id="quiz-q" style="font-size:26px"></p>
-        <button class="btn" onclick="saveQuiz('是')">是</button>
-        <button class="btn" onclick="saveQuiz('否')">否</button>
-    </div>
+    <div id="survey-screen" class="screen">
+        <h2>實驗結束，請協助完成以下問卷</h2>
+        
+        <div class="survey-q">
+            <h3>1. 請問您對於生成式人工智慧是非常信任、有點信任、不太信任還是一點也不信任？</h3>
+            <label><input type="radio" name="q1" value="非常信任"> 非常信任</label>
+            <label><input type="radio" name="q1" value="有點信任"> 有點信任</label>
+            <label><input type="radio" name="q1" value="不太信任"> 不太信任</label>
+            <label><input type="radio" name="q1" value="一點也不信任"> 一點也不信任</label>
+        </div>
 
-    <div id="scale-screen" class="screen">
-        <h2>看完以上貼文，您的立場更認同哪一方？</h2>
-        <div class="scale-btns" id="scale-container"></div>
-        <div class="scale-labels"><span>← 完全認同左側</span><span>中立</span><span>完全認同右側 →</span></div>
+        <div class="survey-q">
+            <h3>2. 請問您一周內，平均有幾天使用社群媒體？</h3>
+            <select id="q2">
+                <option value="0">都沒有</option>
+                <option value="1">1 天</option>
+                <option value="2">2 天</option>
+                <option value="3">3 天</option>
+                <option value="4">4 天</option>
+                <option value="5">5 天</option>
+                <option value="6">6 天</option>
+                <option value="7">7 天</option>
+            </select>
+        </div>
+
+        <div class="survey-q">
+            <h3>3. 請問您是否有注意到，先前閱讀的貼文中存在 AI 標籤？</h3>
+            <label><input type="radio" name="q3" value="是"> 是</label>
+            <label><input type="radio" name="q3" value="否"> 否</label>
+        </div>
+
+        <button class="btn" onclick="submitSurvey()">提交並結束</button>
     </div>
 
     <div id="finish-screen" class="screen">
@@ -76,33 +107,37 @@
     </div>
 
     <script>
-        // 🌟 已更換為你測試成功的網址
+        // 🌟 請填入你的 GAS Web App 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec"; 
         
-        let eyeData = [], decisionData = [], isRecording = false;
-        let roundIdx = 0, calibHits = 0;
-        let taskSeq = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        
-        // 🌟 修改處：直接指派為 treat 組，不再隨機分配
-        let userGroup = "treat"; 
-        
-        // 🌟 隨機產生 6 位數字的 sessionID
+        let eyeData = [];
+        let surveyData = {}; 
+        let isRecording = false;
+        let calibHits = 0;
+        let isValidating = false;
+        let validationSamples = [];
+        let lastGazeTime = 0; 
+        const GAZE_INTERVAL = 100; // 紀錄頻率
+
         const urlParams = new URLSearchParams(window.location.search);
         const sidFromUrl = urlParams.get('sid');
         const sessionID = sidFromUrl ? sidFromUrl : "TEST_" + Math.floor(100000 + Math.random() * 900000).toString();
 
-        let validationSamples = [];
-        let isValidating = false;
-        let lastGazeTime = 0; 
-        const GAZE_INTERVAL = 100; // 每 100 毫秒記錄一次
-
-        const quizBank = {
-            1: { q: "這兩篇文章的主題跟「旅遊」有關嗎？", a: "否" },
-            4: { q: "這兩篇文章的主題跟「美軍行動」有關嗎？", a: "是" },
-            10: { q: "這兩篇文章的主題跟「小孩補習」有關嗎？", a: "否" }
+        // ==========================================
+        // 🌟 圖片題庫設定 (取後不放回)
+        // 檔名請根據實際狀況修改
+        // ==========================================
+        const imagePools = {
+            AD: ['AD_1.png', 'AD_2.png', 'AD_3.png', 'AD_4.png', 'AD_5.png', 'AD_6.png'],
+            Daily: ['Daily_1.png', 'Daily_2.png', 'Daily_3.png', 'Daily_4.png', 'Daily_5.png', 'Daily_6.png'],
+            Daily2: ['Daily2_1.png', 'Daily2_2.png', 'Daily2_3.png', 'Daily2_4.png', 'Daily2_5.png', 'Daily2_6.png'],
+            P_Post: ['P_Post_1.png', 'P_Post_2.png', 'P_Post_3.png', 'P_Post_4.png', 'P_Post_5.png', 'P_Post_6.png']
         };
+        // G_Post 數字庫 (1~6)，抽中後移除該數字，確保同數字只出現一次
+        let gPostNumbers = [1, 2, 3, 4, 5, 6]; 
 
-        function getFileName(url) { return url ? url.split('/').pop() : "None"; }
+        let totalRounds = 6;
+        let currentRound = 1;
 
         async function initExperiment() {
             const btn = document.getElementById('start-btn');
@@ -110,28 +145,32 @@
             try {
                 await webgazer.setRegression('ridge').setGazeListener((data) => {
                     let now = Date.now();
+                    
+                    // 記錄眼動數據
                     if (data && isRecording) {
                         if (now - lastGazeTime >= GAZE_INTERVAL) {
                             const x = Math.round(data.x); const y = Math.round(data.y);
-                            const rectLContent = document.getElementById('img-L').getBoundingClientRect();
-                            const rectLInteract = document.getElementById('int-L').getBoundingClientRect();
-                            const rectRContent = document.getElementById('img-R').getBoundingClientRect();
-                            const rectRInteract = document.getElementById('int-R').getBoundingClientRect();
-                            let aoi = "Background", postFile = "None", interactLabel = "None";
+                            let aoi = "Background";
+                            let postFile = "None";
                             
-                            if (x >= rectLContent.left && x <= rectLContent.right && y >= rectLContent.top && y <= rectLContent.bottom) {
-                                aoi = "Left_Content"; postFile = getFileName(document.getElementById('img-L').src);
-                            } else if (x >= rectLInteract.left && x <= rectLInteract.right && y >= rectLInteract.top && y <= rectLInteract.bottom) {
-                                aoi = "Left_Interact"; interactLabel = getFileName(document.getElementById('int-L').src);
-                            } else if (x >= rectRContent.left && x <= rectRContent.right && y >= rectRContent.top && y <= rectRContent.bottom) {
-                                aoi = "Right_Content"; postFile = getFileName(document.getElementById('img-R').src);
-                            } else if (x >= rectRInteract.left && x <= rectRInteract.right && y >= rectRInteract.top && y <= rectRInteract.bottom) {
-                                aoi = "Right_Interact"; interactLabel = getFileName(document.getElementById('int-R').src);
+                            // 檢查視線是否在任何一張圖片上
+                            const posts = document.querySelectorAll('.post-container img');
+                            for (let img of posts) {
+                                const rect = img.getBoundingClientRect();
+                                // 注意：getBoundingClientRect() 是相對於視窗的座標，跟 Webgazer 吐出的 x,y 座標系一致，所以支援滾動！
+                                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                                    aoi = "Post";
+                                    postFile = img.dataset.filename;
+                                    break;
+                                }
                             }
-                            eyeData.push({ sid: sessionID, round: roundIdx+1, task: taskSeq[roundIdx], group: userGroup, ts: now, x, y, aoi, postFile, interactLabel });
+                            
+                            eyeData.push({ sid: sessionID, round: currentRound, ts: now, x, y, aoi, postFile });
                             lastGazeTime = now;
                         }
                     }
+
+                    // 校正驗證
                     if (data && isValidating) {
                         const dx = data.x - (window.innerWidth / 2);
                         const dy = data.y - (window.innerHeight / 2);
@@ -140,13 +179,13 @@
                 }).begin();
                 document.getElementById('start-screen').style.display = 'none';
                 webgazer.showVideo(true); startCalib();
-            } catch (err) { alert("啟動失敗！"); btn.disabled = false; }
+            } catch (err) { alert("啟動失敗！請確認攝影機權限。"); btn.disabled = false; }
         }
 
         function startCalib() {
             calibHits = 0;
             document.getElementById('calib-hint').style.display = 'block';
-            document.querySelectorAll('.Calibration').forEach(el => { el.style.display = 'block'; el.dataset.n = 0; });
+            document.querySelectorAll('.Calibration').forEach(el => { el.style.display = 'block'; el.dataset.n = 0; el.style.opacity = 1; });
         }
 
         function calibClick(el) {
@@ -162,64 +201,92 @@
             setTimeout(() => {
                 isValidating = false; document.getElementById('validation-dot').style.display = 'none';
                 let avgDist = validationSamples.reduce((a, b) => a + b, 0) / validationSamples.length;
-                if (Math.max(0, Math.round(100 - (avgDist / 4))) < 50) { alert("精度不足重測"); startCalib(); }
-                else { document.getElementById('calib-hint').style.display = 'none'; webgazer.showVideo(false); shuffle(taskSeq); runRound(); }
+                if (Math.max(0, Math.round(100 - (avgDist / 4))) < 50) { 
+                    alert("精度不足，請重新校正"); startCalib(); 
+                } else { 
+                    document.getElementById('calib-hint').style.display = 'none'; 
+                    webgazer.showVideo(false); 
+                    loadRound(); 
+                }
             }, 3000);
         }
 
-        function runRound() {
-            if (roundIdx >= taskSeq.length) { uploadAll(); return; }
-            const tID = taskSeq[roundIdx]; const tNum = tID.toString().padStart(2, '0');
-            const folder = `Task${tNum}_${userGroup}`; const flip = Math.random() > 0.5;
-            document.getElementById('img-L').src = flip ? `${folder}/Task${tNum}_${userGroup}_A.png` : `${folder}/Task${tNum}_${userGroup}_B.png`;
-            document.getElementById('img-R').src = flip ? `${folder}/Task${tNum}_${userGroup}_B.png` : `${folder}/Task${tNum}_${userGroup}_A.png`;
-            
-            // 🌟 修改處：移除 control 組判斷，全部視為 treat 載入互動圖片
-            const iFlip = Math.random() > 0.5;
-            let intL = `interact/Task${tNum}_treat_interact_${iFlip ? 'high' : 'low'}.png`;
-            let intR = `interact/Task${tNum}_treat_interact_${iFlip ? 'low' : 'high'}.png`;
-            
-            document.getElementById('int-L').src = intL; document.getElementById('int-R').src = intR;
-
-            decisionData[roundIdx] = { sid: sessionID, round: roundIdx+1, task: tID, group: userGroup };
-            document.getElementById('experiment-stage').style.display = 'flex';
-            isRecording = true;
-
-            // 測試模式：每輪觀察 3 秒
-            setTimeout(() => {
-                isRecording = false; document.getElementById('experiment-stage').style.display = 'none';
-                if (quizBank[tID]) showQuiz(); else showScale();
-            }, 3000); 
-        }
-
-        function showQuiz() {
-            document.getElementById('quiz-q').innerText = quizBank[taskSeq[roundIdx]].q;
-            document.getElementById('quiz-screen').style.display = 'flex';
-        }
-
-        function saveQuiz(ans) {
-            decisionData[roundIdx].quizRes = (ans === quizBank[taskSeq[roundIdx]].a) ? "Correct" : "Wrong";
-            document.getElementById('quiz-screen').style.display = 'none'; showScale();
-        }
-
-        function showScale() {
-            const cont = document.getElementById('scale-container'); cont.innerHTML = "";
-            for (let i = -5; i <= 5; i++) {
-                let b = document.createElement('button'); b.className = "btn"; b.innerText = i;
-                b.onclick = () => {
-                    decisionData[roundIdx].score = i;
-                    decisionData[roundIdx].leaning = (i < 0) ? "Left" : (i > 0 ? "Right" : "Center");
-                    decisionData[roundIdx].imgL = getFileName(document.getElementById('img-L').src);
-                    decisionData[roundIdx].imgR = getFileName(document.getElementById('img-R').src);
-                    decisionData[roundIdx].intL = getFileName(document.getElementById('int-L').src);
-                    decisionData[roundIdx].intR = getFileName(document.getElementById('int-R').src);
-                    decisionData[roundIdx].ts = Date.now();
-                    document.getElementById('scale-screen').style.display = 'none';
-                    roundIdx++; runRound();
-                };
-                cont.appendChild(b);
+        function loadRound() {
+            if (currentRound > totalRounds) {
+                isRecording = false;
+                document.getElementById('experiment-stage').style.display = 'none';
+                document.getElementById('survey-screen').style.display = 'flex';
+                return;
             }
-            document.getElementById('scale-screen').style.display = 'flex';
+
+            let roundImages = [];
+
+            // 1. 從 AD, Daily, Daily2, P_Post 各隨機抽一張並移除 (取後不放回)
+            ['AD', 'Daily', 'Daily2', 'P_Post'].forEach(folder => {
+                let pool = imagePools[folder];
+                if (pool.length > 0) {
+                    let idx = Math.floor(Math.random() * pool.length);
+                    let imgName = pool.splice(idx, 1)[0];
+                    roundImages.push(`${folder}/${imgName}`);
+                }
+            });
+
+            // 2. 處理 G_Post 特殊邏輯
+            if (gPostNumbers.length > 0) {
+                let gIdx = Math.floor(Math.random() * gPostNumbers.length);
+                let gNum = gPostNumbers.splice(gIdx, 1)[0]; // 抽中後移除該數字
+                let isAI = Math.random() > 0.5; // 50% 機率加上 _AI
+                let gImgName = isAI ? `G_Post_${gNum}_AI.png` : `G_Post_${gNum}.png`;
+                roundImages.push(`G_Post/${gImgName}`);
+            }
+
+            // 3. 打亂這 5 張圖片的垂直排序
+            roundImages.sort(() => Math.random() - 0.5);
+
+            // 4. 渲染到畫面上
+            const wrapper = document.getElementById('posts-wrapper');
+            wrapper.innerHTML = ''; // 清空上一輪
+            
+            roundImages.forEach(src => {
+                let div = document.createElement('div');
+                div.className = 'post-container';
+                let img = document.createElement('img');
+                img.src = src;
+                img.dataset.filename = src.split('/').pop(); // 紀錄純檔名用來做眼動追蹤標記
+                div.appendChild(img);
+                wrapper.appendChild(div);
+            });
+
+            document.getElementById('experiment-stage').style.display = 'flex';
+            document.getElementById('experiment-stage').scrollTop = 0; // 每一輪回到最上方
+            isRecording = true;
+        }
+
+        function nextRound() {
+            currentRound++;
+            loadRound();
+        }
+
+        function submitSurvey() {
+            let q1 = document.querySelector('input[name="q1"]:checked');
+            let q2 = document.getElementById('q2').value;
+            let q3 = document.querySelector('input[name="q3"]:checked');
+
+            if (!q1 || !q3) {
+                alert("請完成所有問卷題目後再提交！");
+                return;
+            }
+
+            surveyData = {
+                sid: sessionID,
+                q1_trust: q1.value,
+                q2_days: q2,
+                q3_noticeAI: q3.value,
+                ts: Date.now()
+            };
+
+            document.getElementById('survey-screen').style.display = 'none';
+            uploadAll();
         }
 
         async function uploadAll() {
@@ -229,24 +296,21 @@
             const payload = JSON.stringify({
                 sid: sessionID,
                 eye: eyeData,
-                decision: decisionData
+                survey: surveyData
             });
 
             try {
-                // 使用打包後的 payload 進行單次 POST 上傳
                 await fetch(GAS_URL, { 
                     method: 'POST', 
                     mode: 'no-cors', 
                     headers: { 'Content-Type': 'text/plain' }, 
                     body: payload 
                 });
-                document.getElementById('status').innerText = "上傳成功！感謝參與。";
+                document.getElementById('status').innerText = "上傳成功！感謝您的參與。";
             } catch (err) {
                 document.getElementById('status').innerText = "上傳失敗，請聯絡研究員。";
             }
         }
-
-        function shuffle(arr) { arr.sort(() => Math.random() - 0.5); }
     </script>
 </body>
 </html>
