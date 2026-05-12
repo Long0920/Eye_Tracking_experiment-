@@ -118,6 +118,8 @@
         let validationSamples = [];
         let lastGazeTime = 0; 
         const GAZE_INTERVAL = 100; // 紀錄頻率
+        
+        let roundTimeout; // 宣告每輪的計時器變數
 
         const urlParams = new URLSearchParams(window.location.search);
         const sidFromUrl = urlParams.get('sid');
@@ -157,7 +159,6 @@
                             const posts = document.querySelectorAll('.post-container img');
                             for (let img of posts) {
                                 const rect = img.getBoundingClientRect();
-                                // 注意：getBoundingClientRect() 是相對於視窗的座標，跟 Webgazer 吐出的 x,y 座標系一致，所以支援滾動！
                                 if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
                                     aoi = "Post";
                                     postFile = img.dataset.filename;
@@ -201,8 +202,11 @@
             setTimeout(() => {
                 isValidating = false; document.getElementById('validation-dot').style.display = 'none';
                 let avgDist = validationSamples.reduce((a, b) => a + b, 0) / validationSamples.length;
-                if (Math.max(0, Math.round(100 - (avgDist / 4))) < 50) { 
-                    alert("精度不足，請重新校正"); startCalib(); 
+                
+                // 🌟 精度門檻修改為 40
+                if (Math.max(0, Math.round(100 - (avgDist / 4))) < 40) { 
+                    alert("視線偏移較大，請保持頭部穩定並重新校正"); 
+                    startCalib(); 
                 } else { 
                     document.getElementById('calib-hint').style.display = 'none'; 
                     webgazer.showVideo(false); 
@@ -212,6 +216,9 @@
         }
 
         function loadRound() {
+            // 清除上一輪的計時器，避免互相干擾
+            clearTimeout(roundTimeout);
+
             if (currentRound > totalRounds) {
                 isRecording = false;
                 document.getElementById('experiment-stage').style.display = 'none';
@@ -260,6 +267,11 @@
             document.getElementById('experiment-stage').style.display = 'flex';
             document.getElementById('experiment-stage').scrollTop = 0; // 每一輪回到最上方
             isRecording = true;
+
+            // 🌟 隱藏的 45 秒倒數機制：時間到自動跳轉下一輪
+            roundTimeout = setTimeout(() => {
+                nextRound();
+            }, 45000);
         }
 
         function nextRound() {
