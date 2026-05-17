@@ -2,8 +2,8 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8">
-    <title>社群媒體研究 - 最終滾動測試版</title>
-    <script src="webgazer.js"></script>
+    <title>社群媒體研究 - 眼動與注意力測量</title>
+    <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; background: #f0f2f5; overflow: hidden; }
         .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; overflow-y: auto; }
@@ -30,18 +30,22 @@
         .btn:hover { background: #eee; }
         
         /* 問卷樣式 */
+        .survey-container { overflow-y: auto; height: 100vh; width: 100%; padding: 40px 0; }
         .survey-q { text-align: left; max-width: 600px; width: 90%; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #ddd; }
-        .survey-q h3 { margin-top: 0; font-size: 18px; }
-        .survey-q label { display: block; margin: 10px 0; font-size: 16px; cursor: pointer; }
-        .survey-q select { font-size: 16px; padding: 5px; width: 100%; margin-top: 10px; }
+        .survey-q h3 { margin-top: 0; font-size: 18px; line-height: 1.4; }
+        .survey-q label { display: block; margin: 12px 0; font-size: 16px; cursor: pointer; padding: 8px; border-radius: 4px; transition: background 0.2s;}
+        .survey-q label:hover { background: #f5f5f5; }
+        .survey-q select { font-size: 16px; padding: 8px; width: 100%; margin-top: 10px; border-radius: 4px; border: 1px solid #ccc; }
+        .scale-group { display: flex; justify-content: space-between; margin-top: 15px; }
+        .scale-item { text-align: center; font-size: 14px; }
     </style>
 </head>
 <body>
 
     <div id="start-screen" class="screen" style="display: flex;">
         <h1>社群媒體閱聽實驗</h1>
-        <p>請正對鏡頭。系統將進行眼動校正。</p>
-        <button class="btn" id="start-btn" onclick="initExperiment()">啟動攝影機</button>
+        <p>為確保實驗品質，請使用桌上型電腦或筆記型電腦。<br>請正對螢幕，系統將進行眼動校正。</p>
+        <button class="btn" id="start-btn" onclick="initExperiment()">允許攝影機權限並開始</button>
     </div>
 
     <div id="calib-hint">請視線跟著游標，點擊畫面上的紅點各 5 次</div>
@@ -61,43 +65,65 @@
 
     <div id="experiment-stage">
         <div id="posts-wrapper">
-            <!-- 圖片動態生成區域 -->
-        </div>
-        <button class="btn" id="next-round-btn" onclick="nextRound()">下一輪</button>
+            </div>
+        <button class="btn" id="next-round-btn" onclick="nextRound()">載入更多動態</button>
     </div>
 
     <div id="survey-screen" class="screen">
-        <h2>實驗結束，請協助完成以下問卷</h2>
-        
-        <div class="survey-q">
-            <h3>1. 請問您對於生成式人工智慧是非常信任、有點信任、不太信任還是一點也不信任？</h3>
-            <label><input type="radio" name="q1" value="非常信任"> 非常信任</label>
-            <label><input type="radio" name="q1" value="有點信任"> 有點信任</label>
-            <label><input type="radio" name="q1" value="不太信任"> 不太信任</label>
-            <label><input type="radio" name="q1" value="一點也不信任"> 一點也不信任</label>
-        </div>
+        <div class="survey-container">
+            <h2>實驗結束，請協助完成以下回饋</h2>
+            
+            <div class="survey-q">
+                <h3>1. 請問您對於生成式人工智慧產出的內容，整體而言信任程度為何？</h3>
+                <label><input type="radio" name="q1" value="非常信任"> 非常信任</label>
+                <label><input type="radio" name="q1" value="有點信任"> 有點信任</label>
+                <label><input type="radio" name="q1" value="不太信任"> 不太信任</label>
+                <label><input type="radio" name="q1" value="一點也不信任"> 一點也不信任</label>
+            </div>
 
-        <div class="survey-q">
-            <h3>2. 請問您一周內，平均有幾天使用社群媒體？</h3>
-            <select id="q2">
-                <option value="0">都沒有</option>
-                <option value="1">1 天</option>
-                <option value="2">2 天</option>
-                <option value="3">3 天</option>
-                <option value="4">4 天</option>
-                <option value="5">5 天</option>
-                <option value="6">6 天</option>
-                <option value="7">7 天</option>
-            </select>
-        </div>
+            <div class="survey-q">
+                <h3>2. 請問您一周內，平均有幾天會主動瀏覽社群媒體？</h3>
+                <select id="q2">
+                    <option value="" disabled selected>請選擇天數</option>
+                    <option value="0">都沒有</option>
+                    <option value="1">1 天</option>
+                    <option value="2">2 天</option>
+                    <option value="3">3 天</option>
+                    <option value="4">4 天</option>
+                    <option value="5">5 天</option>
+                    <option value="6">6 天</option>
+                    <option value="7">7 天</option>
+                </select>
+            </div>
 
-        <div class="survey-q">
-            <h3>3. 請問您是否有注意到，先前閱讀的貼文中存在 AI 標籤？</h3>
-            <label><input type="radio" name="q3" value="是"> 是</label>
-            <label><input type="radio" name="q3" value="否"> 否</label>
-        </div>
+            <div class="survey-q">
+                <h3>3. 在剛剛瀏覽的動態消息中，您是否有注意到部分貼文帶有標示 AI 相關的標籤？</h3>
+                <label><input type="radio" name="q3" value="是"> 是，我有注意到</label>
+                <label><input type="radio" name="q3" value="否"> 否，我沒有注意到</label>
+            </div>
 
-        <button class="btn" onclick="submitSurvey()">提交並結束</button>
+            <div class="survey-q" id="q4-container">
+                <h3>4. 承上題，若您有注意到標籤，請問您看到的是下列哪一種樣式？(若未注意到請選最後一項)</h3>
+                <label><input type="radio" name="q4" value="A_藍色盾牌"> A. 帶有藍色盾牌圖示的警告標語</label>
+                <label><input type="radio" name="q4" value="B_灰色AI資訊"> B. 灰色細體字的「✨ AI 資訊」標籤</label>
+                <label><input type="radio" name="q4" value="C_紅色驚嘆號"> C. 帶有紅色驚嘆號的浮水印</label>
+                <label><input type="radio" name="q4" value="D_綠色機器人"> D. 綠色機器人圖示的底框</label>
+                <label><input type="radio" name="q4" value="E_沒注意到"> E. 我剛剛沒有注意到任何標籤</label>
+            </div>
+
+            <div class="survey-q">
+                <h3>5. 您對於上一題 (標籤樣式) 的回答有多大的把握？</h3>
+                <div class="scale-group">
+                    <label class="scale-item"><input type="radio" name="q5" value="1"><br>1分<br>(完全用猜的)</label>
+                    <label class="scale-item"><input type="radio" name="q5" value="2"><br>2分</label>
+                    <label class="scale-item"><input type="radio" name="q5" value="3"><br>3分</label>
+                    <label class="scale-item"><input type="radio" name="q5" value="4"><br>4分</label>
+                    <label class="scale-item"><input type="radio" name="q5" value="5"><br>5分<br>(非常肯定)</label>
+                </div>
+            </div>
+
+            <button class="btn" onclick="submitSurvey()" style="margin-bottom: 50px;">提交並結束</button>
+        </div>
     </div>
 
     <div id="finish-screen" class="screen">
@@ -106,7 +132,7 @@
     </div>
 
     <script>
-        // 🌟 請確認這裡是你的正確 GAS Web App 網址
+        // 🌟 更新為您的 GAS Web App 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec"; 
         
         let eyeData = [];
@@ -118,19 +144,15 @@
         let lastGazeTime = 0; 
         const GAZE_INTERVAL = 100; // 每 100 毫秒紀錄一次
         
-        let roundTimeout; // 控制每輪 45 秒的最大觀看時間
+        let roundTimeout; 
         
-        // 🌟 滑動標記控制變數
         let isScrolling = false;
         let scrollTimeout = null;
 
-        // 監聽實驗舞台的滾動事件
         document.getElementById('experiment-stage').addEventListener('scroll', () => {
             if (!isRecording) return;
             isScrolling = true;
             clearTimeout(scrollTimeout);
-            
-            // 停止滾動 200 毫秒後解除滑動狀態
             scrollTimeout = setTimeout(() => {
                 isScrolling = false;
             }, 200);
@@ -140,7 +162,6 @@
         const sidFromUrl = urlParams.get('sid');
         const sessionID = sidFromUrl ? sidFromUrl : "TEST_" + Math.floor(100000 + Math.random() * 900000).toString();
 
-        // 圖片庫設定
         const imagePools = {
             AD: ['AD_1.png', 'AD_2.png', 'AD_3.png', 'AD_4.png', 'AD_5.png', 'AD_6.png'],
             Daily: ['Daily_1.png', 'Daily_2.png', 'Daily_3.png', 'Daily_4.png', 'Daily_5.png', 'Daily_6.png'],
@@ -154,7 +175,7 @@
 
         async function initExperiment() {
             const btn = document.getElementById('start-btn');
-            btn.innerText = "資源初始化中..."; btn.disabled = true;
+            btn.innerText = "相機初始化中，請稍候..."; btn.disabled = true;
             try {
                 await webgazer.setRegression('ridge').setGazeListener((data) => {
                     let now = Date.now();
@@ -165,16 +186,31 @@
                             let aoi = "Background";
                             let postFile = "None";
                             
-                            // 🌟 判斷是否正在滑動
                             if (isScrolling) {
-                                aoi = "Scrolling"; // 標記為滑動中
+                                aoi = "Scrolling"; 
                             } else {
-                                // 若無滑動，才判斷視線落在哪張圖片上
                                 const posts = document.querySelectorAll('.post-container img');
                                 for (let img of posts) {
                                     const rect = img.getBoundingClientRect();
+                                    
                                     if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                                        aoi = "Post";
+                                        
+                                        // 🌟 進階 AOI 相對座標切分邏輯
+                                        const relativeX = (x - rect.left) / rect.width;
+                                        const relativeY = (y - rect.top) / rect.height;
+                                        
+                                        // 假設標籤資訊區高度為 150px，護城河區間為 80px
+                                        const headerHeightRatio = 150 / rect.height; 
+                                        const gapRatio = 80 / rect.height;
+                                        
+                                        if (relativeX <= 0.65 && relativeY <= headerHeightRatio) {
+                                            aoi = "Header_AOI";
+                                        } else if (relativeY > headerHeightRatio && relativeY <= (headerHeightRatio + gapRatio)) {
+                                            aoi = "Whitespace_Gap"; 
+                                        } else {
+                                            aoi = "Main_Content"; 
+                                        }
+                                        
                                         postFile = img.dataset.filename;
                                         break;
                                     }
@@ -194,7 +230,7 @@
                 }).begin();
                 document.getElementById('start-screen').style.display = 'none';
                 webgazer.showVideo(true); startCalib();
-            } catch (err) { alert("啟動失敗！請確認攝影機權限。"); btn.disabled = false; }
+            } catch (err) { alert("啟動失敗！請確認瀏覽器已允許攝影機權限。"); btn.disabled = false; btn.innerText = "允許攝影機權限並開始"; }
         }
 
         function startCalib() {
@@ -210,14 +246,13 @@
         }
 
         function startValidation() {
-            document.getElementById('calib-hint').innerText = "請盯著藍點 3 秒";
+            document.getElementById('calib-hint').innerText = "請盯著藍點 3 秒不要動";
             document.getElementById('validation-dot').style.display = 'block';
             isValidating = true;
             setTimeout(() => {
                 isValidating = false; document.getElementById('validation-dot').style.display = 'none';
                 let avgDist = validationSamples.reduce((a, b) => a + b, 0) / validationSamples.length;
                 
-                // 🌟 校正精度門檻放寬至 40
                 if (Math.max(0, Math.round(100 - (avgDist / 4))) < 40) { 
                     alert("視線偏移較大，請保持頭部穩定並重新校正"); 
                     startCalib(); 
@@ -230,7 +265,7 @@
         }
 
         function loadRound() {
-            clearTimeout(roundTimeout); // 清除上一輪的計時器
+            clearTimeout(roundTimeout); 
 
             if (currentRound > totalRounds) {
                 isRecording = false;
@@ -241,7 +276,6 @@
 
             let roundImages = [];
 
-            // 從各資料夾隨機抽取一張
             ['AD', 'Daily', 'Daily2', 'P_Post'].forEach(folder => {
                 let pool = imagePools[folder];
                 if (pool.length > 0) {
@@ -251,7 +285,6 @@
                 }
             });
 
-            // 處理 G_Post 特殊邏輯
             if (gPostNumbers.length > 0) {
                 let gIdx = Math.floor(Math.random() * gPostNumbers.length);
                 let gNum = gPostNumbers.splice(gIdx, 1)[0];
@@ -260,7 +293,6 @@
                 roundImages.push(`G_Post/${gImgName}`);
             }
 
-            // 圖片隨機排序
             roundImages.sort(() => Math.random() - 0.5);
 
             const wrapper = document.getElementById('posts-wrapper');
@@ -279,19 +311,17 @@
             document.getElementById('experiment-stage').style.display = 'flex';
             document.getElementById('experiment-stage').scrollTop = 0;
             
-            // 延遲一點點再開啟紀錄，避免換頁瞬間的跳動干擾
             setTimeout(() => {
                 isRecording = true;
             }, 300);
 
-            // 🌟 45秒自動換頁機制
             roundTimeout = setTimeout(() => {
                 nextRound();
             }, 45000);
         }
 
         function nextRound() {
-            isRecording = false; // 換頁期間暫停紀錄
+            isRecording = false; 
             currentRound++;
             loadRound();
         }
@@ -300,9 +330,11 @@
             let q1 = document.querySelector('input[name="q1"]:checked');
             let q2 = document.getElementById('q2').value;
             let q3 = document.querySelector('input[name="q3"]:checked');
+            let q4 = document.querySelector('input[name="q4"]:checked');
+            let q5 = document.querySelector('input[name="q5"]:checked');
 
-            if (!q1 || !q3) {
-                alert("請完成所有問卷題目後再提交！");
+            if (!q1 || q2 === "" || !q3 || !q4 || !q5) {
+                alert("請確認所有問卷題目皆已完成作答！");
                 return;
             }
 
@@ -311,6 +343,8 @@
                 q1_trust: q1.value,
                 q2_days: q2,
                 q3_noticeAI: q3.value,
+                q4_labelType: q4.value,
+                q5_confidence: q5.value,
                 ts: Date.now()
             };
 
@@ -335,9 +369,9 @@
                     headers: { 'Content-Type': 'text/plain' }, 
                     body: payload 
                 });
-                document.getElementById('status').innerText = "上傳成功！感謝您的參與。";
+                document.getElementById('status').innerText = "上傳成功！感謝您的參與，您可直接關閉此視窗。";
             } catch (err) {
-                document.getElementById('status').innerText = "上傳失敗，請聯絡研究員。";
+                document.getElementById('status').innerText = "上傳失敗，請稍後再試或聯絡研究員。";
             }
         }
     </script>
