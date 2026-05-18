@@ -178,7 +178,6 @@
         // 🌟 更新為您的 GAS Web App 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec"; 
         
-        // --- 核心變數與 WebGazer 邏輯保持不變 ---
         let eyeData = [];
         let surveyData = {}; 
         let isRecording = false;
@@ -258,6 +257,10 @@
                         validationSamples.push(Math.sqrt(dx*dx + dy*dy));
                     }
                 }).begin();
+                
+                // 隱藏 WebGazer 追蹤視線的紅點
+                webgazer.showPredictionPoints(false);
+
                 document.getElementById('start-screen').style.display = 'none';
                 webgazer.showVideo(true); startCalib();
             } catch (err) { alert("啟動失敗！請確認瀏覽器已允許攝影機權限。"); btn.disabled = false; btn.innerText = "允許攝影機權限並開始"; }
@@ -265,6 +268,7 @@
 
         function startCalib() {
             calibHits = 0;
+            document.getElementById('calib-hint').innerText = "請視線跟著游標，點擊畫面上的紅點各 5 次";
             document.getElementById('calib-hint').style.display = 'block';
             document.querySelectorAll('.Calibration').forEach(el => { el.style.display = 'block'; el.dataset.n = 0; el.style.opacity = 1; });
         }
@@ -336,7 +340,6 @@
             isRecording = false; currentRound++; loadRound();
         }
 
-        // --- 問卷提交邏輯 (更新為 Q12 ~ Q20 嚴格防呆) ---
         function submitSurvey() {
             let q12 = document.querySelector('input[name="q12"]:checked');
             let q13 = document.querySelector('input[name="q13"]:checked');
@@ -348,7 +351,6 @@
             let q19 = document.querySelector('input[name="q19"]:checked');
             let q20 = document.querySelector('input[name="q20"]:checked');
 
-            // 檢查是否全部作答
             if (!q12 || !q13 || !q14 || !q15 || !q16 || !q17 || !q18 || !q19 || !q20) {
                 alert("請確認 Q12 到 Q20 每一題皆已完成作答！");
                 return;
