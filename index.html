@@ -215,7 +215,7 @@
             </div>
 
             <div class="survey-q" style="margin-top: 40px; border-top: 3px solid #1a73e8;">
-                <h3>Q29. 不同的人在社群媒體上可能有不同的使用行為。當政府的社群貼文出現在瀏覽頁面時，有些人會迅速略過 these 貼文；也有些人會仔細觀看貼文內容。當您瀏覽社群媒體時，若政府的社群貼文出現在您的瀏覽頁面時，請問您通常會迅速略過還是會仔細觀看？</h3>
+                <h3>Q29. 不同的人在社群媒體上可能有不同的使用行為。當政府的社群貼文出現在瀏覽頁面時，有些人會迅速略過這些貼文；也有些人會仔細觀看貼文內容。當您瀏覽社群媒體時，若政府的社群貼文出現在您的瀏覽頁面時，請問您通常會迅速略過還是會仔細觀看？</h3>
                 <div class="scale-labels"><span>0 (迅速略過)</span><span>10 (仔細觀看)</span></div>
                 <div class="scale-0-10-container" id="scale-q29"></div>
             </div>
@@ -360,7 +360,7 @@
                 webgazer.showPredictionPoints(false);
                 document.getElementById('start-screen').style.display = 'none';
                 webgazer.showVideo(true); startCalib();
-            } catch (err) { alert("啟動失敗！請確認瀏覽器已允許攝影機權限。"); btn.disabled = false; btn.innerText = "允許攝影機權限並開始"; }
+            } catch (err) { alert("啟動慢速或失敗！請確認瀏覽器已允許攝影機權限。"); btn.disabled = false; btn.innerText = "允許攝影機權限並開始"; }
         }
 
         function startCalib() {
@@ -377,7 +377,6 @@
         }
 
         function startValidation() {
-            // ★ 文字正確修正：校正未通過時重來會自動恢復「視線跟著游標...」提示
             document.getElementById('calib-hint').innerText = "請盯著藍點 3 秒不要動";
             document.getElementById('validation-dot').style.display = 'block';
             isValidating = true;
@@ -496,7 +495,14 @@
                     headers: { 'Content-Type': 'text/plain' }, 
                     body: payload 
                 });
-                document.getElementById('status').innerText = "上傳成功！感謝您的參與，您可直接關閉此視窗。";
+                
+                document.getElementById('status').innerText = "實驗數據上傳成功！正在引導至最後的基本資料填寫...";
+                
+                // 🌟 實務串接：自動跳轉至 SurveyCake 並夾帶隱藏的 sessionID 參數
+                setTimeout(() => {
+                    window.location.href = `https://www.surveycake.com/s/你的問卷代碼?sid=${sessionID}`;
+                }, 2000);
+
             } catch (err) {
                 document.getElementById('status').innerText = "上傳失敗，請稍後再試或聯絡研究員。";
             }
