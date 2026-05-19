@@ -98,7 +98,7 @@
             <div class="survey-q">
                 <h3>Q13. 臺灣電力公司的貼文中，請問該貼文主題為何?</h3>
                 <label><input type="radio" name="q13" value="臺電新電價計算公式"> 臺電新電價計算公式</label>
-                <label><input type="radio" name="q13" value="近期各類型發電價格變化量"> 近期各類型發電價格變化量</label>
+                <label><input type="radio" name="q13" value="近期各類型發電價格變化量"> 近期各類型發發電價格變化量</label>
                 <label><input type="radio" name="q13" value="上半年平均日發電量統計"> 上半年平均日發電量統計</label>
                 <label><input type="radio" name="q13" value="臺電新LOGO設計理念說明與澄清"> 臺電新LOGO設計理念說明與澄清</label>
             </div>
@@ -276,9 +276,24 @@
             scrollTimeout = setTimeout(() => { isScrolling = false; }, 200);
         }, { passive: true });
 
+        // 🌟 核心修改：接收 SurveyCake 傳過來的動態 ID 或 AUTO 線索
         const urlParams = new URLSearchParams(window.location.search);
-        const sidFromUrl = urlParams.get('sid');
-        const sessionID = sidFromUrl ? sidFromUrl : "TEST_" + Math.floor(100000 + Math.random() * 900000).toString();
+        let sidFromUrl = urlParams.get('sid');
+
+        // 🌟 免費版 SurveyCake 專用黑科技自動辨識編號邏輯
+        if (sidFromUrl === "AUTO" || !sidFromUrl || sidFromUrl === "" || sidFromUrl === "") {
+            const now = new Date();
+            const timeStr = now.getFullYear() + 
+                            String(now.getMonth() + 1).padStart(2, '0') + 
+                            String(now.getDate()).padStart(2, '0') + 
+                            String(now.getHours()).padStart(2, '0') + 
+                            String(now.getMinutes()).padStart(2, '0');
+            const randomNum = Math.floor(100 + Math.random() * 900); 
+            
+            sidFromUrl = "SC_" + timeStr + "_" + randomNum; // 生成高識別度的唯一時間戳編號，如: SC_202605192130_582
+        }
+
+        const sessionID = sidFromUrl;
 
         // 原始圖片對照池（移除 Daily2）
         const imagePools = {
@@ -360,7 +375,7 @@
                 webgazer.showPredictionPoints(false);
                 document.getElementById('start-screen').style.display = 'none';
                 webgazer.showVideo(true); startCalib();
-            } catch (err) { alert("啟動慢速或失敗！請確認瀏覽器已允許攝影機權限。"); btn.disabled = false; btn.innerText = "允許攝影機權限並開始"; }
+            } catch (err) { alert("啟動失敗！請確認瀏覽器已允許攝影機權限。"); btn.disabled = false; btn.innerText = "允許攝影機權限並開始"; }
         }
 
         function startCalib() {
@@ -404,7 +419,7 @@
                 return;
             }
             
-            // 🌟 核心修改：每一輪，強制從四個資料夾「各隨機抽2張」組成該輪的 8 張圖
+            // 🌟 每一輪，強制從四個資料夾「各隨機抽2張」組成該輪的 8 張圖
             let roundImages = [];
             
             ['AD', 'Daily', 'P_Post', 'G_Post'].forEach(folder => {
@@ -446,7 +461,7 @@
             document.getElementById('experiment-stage').scrollTop = 0;
             setTimeout(() => { isRecording = true; }, 300);
             
-            // ★ 時間上限改為 120000 毫秒 (2 分鐘)
+            // ★ 時間上限為 2 分鐘
             roundTimeout = setTimeout(() => { nextRound(); }, 120000);
         }
 
@@ -465,7 +480,6 @@
                 answers[`q${i}`] = el.value;
             }
 
-            // ★ Q30 開放題：不強制填寫，若留空則上傳空字串
             answers['q30'] = document.getElementById('q30').value.trim();
 
             surveyData = {
@@ -495,10 +509,8 @@
                     headers: { 'Content-Type': 'text/plain' }, 
                     body: payload 
                 });
-                
-                // 🌟 因為這是實驗終點站，直接顯示成功訊息，讓受試者可以關閉視窗
-                document.getElementById('status').innerText = "上傳成功！感謝您的參與，您可直接關閉此視窗。";
-
+                // 🌟 作為流程終點站，數據寫入 GAS 試算表後顯示提示訊息
+                document.getElementById('status').innerText = "上傳成功！感謝您的參與，您現在可直接關閉此瀏覽器分頁。";
             } catch (err) {
                 document.getElementById('status').innerText = "上傳失敗，請稍後再試或聯絡研究員。";
             }
