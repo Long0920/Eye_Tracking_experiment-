@@ -215,7 +215,7 @@
             </div>
 
             <div class="survey-q" style="margin-top: 40px; border-top: 3px solid #1a73e8;">
-                <h3>Q29. 不同的人在社群媒體上可能有不同的使用行為。當政府的社群貼文出現在瀏覽頁面時，有些人會迅速略過這些貼文；也有些人會仔細觀看貼文內容。當您瀏覽社群媒體時，若政府的社群貼文出現在您的瀏覽頁面時，請問您通常會迅速略過還是會仔細觀看？</h3>
+                <h3>Q29. 不同的人在社群媒體上可能有不同的使用行為。當政府的社群貼文出現在瀏覽頁面時，有些人會迅速略過 these 貼文；也有些人會仔細觀看貼文內容。當您瀏覽社群媒體時，若政府的社群貼文出現在您的瀏覽頁面時，請問您通常會迅速略過還是會仔細觀看？</h3>
                 <div class="scale-labels"><span>0 (迅速略過)</span><span>10 (仔細觀看)</span></div>
                 <div class="scale-0-10-container" id="scale-q29"></div>
             </div>
@@ -280,7 +280,7 @@
         const sidFromUrl = urlParams.get('sid');
         const sessionID = sidFromUrl ? sidFromUrl : "TEST_" + Math.floor(100000 + Math.random() * 900000).toString();
 
-        // ★ 移除 Daily2
+        // 原始圖片對照池（移除 Daily2）
         const imagePools = {
             AD: ['AD_1.png', 'AD_2.png', 'AD_3.png', 'AD_4.png', 'AD_5.png', 'AD_6.png'],
             Daily: ['Daily_1.png', 'Daily_2.png', 'Daily_3.png', 'Daily_4.png', 'Daily_5.png', 'Daily_6.png'],
@@ -288,29 +288,26 @@
         };
         let gPostNumbers = [1, 2, 3, 4, 5, 6]; 
         
-        // ★ 縮減為 3 輪
+        // 縮減為 3 輪
         let totalRounds = 3; 
         let currentRound = 1;
-        let masterImageQueue = []; 
 
-        // 將 24 張圖大洗牌排隊
+        // 🌟 建立獨立的抽牌堆架構
+        let activePools = { AD: [], Daily: [], P_Post: [], G_Post: [] };
+
+        // 🌟 初始化洗牌函數：保證 G_Post 同一編號只隨機出現 1 次
         function prepareImageQueue() {
-            ['AD', 'Daily', 'P_Post'].forEach(folder => {
-                imagePools[folder].forEach(imgName => {
-                    masterImageQueue.push(`${folder}/${imgName}`);
-                });
-            });
-
-            gPostNumbers.forEach(gNum => {
+            activePools.AD = [...imagePools.AD];
+            activePools.Daily = [...imagePools.Daily];
+            activePools.P_Post = [...imagePools.P_Post];
+            activePools.G_Post = []; // 清空重置
+            
+            let tempGList = [...gPostNumbers];
+            tempGList.forEach(gNum => {
                 let isAI = Math.random() > 0.5;
                 let gImgName = isAI ? `G_Post_${gNum}_AI.png` : `G_Post_${gNum}.png`;
-                masterImageQueue.push(`G_Post/${gImgName}`);
+                activePools.G_Post.push(`G_Post/${gImgName}`);
             });
-
-            for (let i = masterImageQueue.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [masterImageQueue[i], masterImageQueue[j]] = [masterImageQueue[j], masterImageQueue[i]];
-            }
         }
 
         async function initExperiment() {
@@ -380,6 +377,7 @@
         }
 
         function startValidation() {
+            // ★ 文字正確修正：校正未通過時重來會自動恢復「視線跟著游標...」提示
             document.getElementById('calib-hint').innerText = "請盯著藍點 3 秒不要動";
             document.getElementById('validation-dot').style.display = 'block';
             isValidating = true;
@@ -392,7 +390,7 @@
                     document.getElementById('calib-hint').style.display = 'none'; 
                     webgazer.showVideo(false); 
                     
-                    prepareImageQueue(); // 洗牌所有圖片
+                    prepareImageQueue(); // 執行分層抽樣洗牌
                     loadRound(); 
                 }
             }, 3000);
@@ -407,9 +405,31 @@
                 return;
             }
             
-            // ★ 每輪精準抽取 8 張圖
-            let startIndex = (currentRound - 1) * 8;
-            let roundImages = masterImageQueue.slice(startIndex, startIndex + 8);
+            // 🌟 核心修改：每一輪，強制從四個資料夾「各隨機抽2張」組成該輪的 8 張圖
+            let roundImages = [];
+            
+            ['AD', 'Daily', 'P_Post', 'G_Post'].forEach(folder => {
+                let pool = activePools[folder];
+                
+                // 隨機抽第 1 張並自陣列移除
+                let idx1 = Math.floor(Math.random() * pool.length);
+                let img1 = pool.splice(idx1, 1)[0];
+                
+                // 隨機抽第 2 張並自陣列移除
+                let idx2 = Math.floor(Math.random() * pool.length);
+                let img2 = pool.splice(idx2, 1)[0];
+                
+                if (folder !== 'G_Post') {
+                    roundImages.push(`${folder}/${img1}`);
+                    roundImages.push(`${folder}/${img2}`);
+                } else {
+                    roundImages.push(img1);
+                    roundImages.push(img2);
+                }
+            });
+            
+            // 🌟 將選定的 8 張圖打亂動態順序，打破固定出現規律
+            roundImages.sort(() => Math.random() - 0.5);
             
             const wrapper = document.getElementById('posts-wrapper');
             wrapper.innerHTML = '';
@@ -446,7 +466,7 @@
                 answers[`q${i}`] = el.value;
             }
 
-            // ★ 擷取 Q30 的文字，若無則為空字串 (不強制必填)
+            // ★ Q30 開放題：不強制填寫，若留空則上傳空字串
             answers['q30'] = document.getElementById('q30').value.trim();
 
             surveyData = {
