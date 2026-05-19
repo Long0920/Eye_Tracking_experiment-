@@ -8,7 +8,6 @@
         body { margin: 0; padding: 0; font-family: sans-serif; background: #f0f2f5; overflow: hidden; }
         .screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; overflow-y: auto; }
         
-        /* 實驗主要舞台 (滾動區域) */
         #experiment-stage { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000; background: #f0f2f5; flex-direction: column; align-items: center; overflow-y: auto; padding-top: 30px; padding-bottom: 50px; scroll-behavior: smooth; }
         #posts-wrapper { display: flex; flex-direction: column; width: 100%; max-width: 600px; align-items: center; gap: 20px; }
         
@@ -17,7 +16,7 @@
 
         #webgazerVideoContainer { display: block !important; position: fixed !important; top: 0; left: 0; width: 1px !important; height: 1px !important; opacity: 0.01 !important; z-index: -1; }
 
-        /* 校正點樣式 */
+        /* 校正點 */
         .Calibration { width: 30px; height: 30px; border-radius: 50%; background: red; position: fixed; display: none; border: none; cursor: pointer; z-index: 5000; transition: opacity 0.2s; }
         #Pt1 { top: 10%; left: 10%; } #Pt2 { top: 10%; left: 50%; } #Pt3 { top: 10%; left: 90%; }
         #Pt4 { top: 50%; left: 10%; } #Pt5 { top: 50%; left: 50%; } #Pt6 { top: 50%; left: 90%; }
@@ -31,23 +30,26 @@
         
         /* 問卷樣式設計 */
         .survey-container { overflow-y: auto; height: 100vh; width: 100%; padding: 40px 0; background: #f9f9f9;}
-        .survey-q { text-align: left; max-width: 650px; width: 90%; margin: 20px auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #ddd; }
-        .survey-q h2 { margin-top: 0; font-size: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;}
-        .survey-q h3 { margin-top: 0; font-size: 16px; line-height: 1.5; margin-bottom: 15px; color: #333; }
-        .survey-q label { display: flex; align-items: center; margin: 10px 0; font-size: 15px; cursor: pointer; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; border: 1px solid transparent;}
+        .survey-section-title { max-width: 650px; width: 90%; margin: 30px auto 10px auto; text-align: left; font-size: 22px; font-weight: bold; color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px;}
+        .survey-transition { max-width: 650px; width: 90%; margin: 10px auto 20px auto; text-align: left; font-size: 16px; color: #555; line-height: 1.6; background: #eef2fb; padding: 15px; border-radius: 8px; border-left: 5px solid #1a73e8;}
+        
+        .survey-q { text-align: left; max-width: 650px; width: 90%; margin: 15px auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #ddd; }
+        .survey-q h3 { margin-top: 0; font-size: 16px; line-height: 1.5; margin-bottom: 15px; color: #222; }
+        .survey-q label { display: flex; align-items: center; margin: 8px 0; font-size: 15px; cursor: pointer; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; border: 1px solid transparent;}
         .survey-q label:hover { background: #f0f4f8; }
         .survey-q input[type="radio"] { margin-right: 12px; transform: scale(1.2); }
         
-        /* Q18 圖片選項專屬樣式 */
         .img-option { align-items: center; }
         .img-option img { max-height: 40px; margin-left: 10px; border: 1px solid #ddd; border-radius: 4px; padding: 2px; }
         
-        /* Q20 0-10 量表專屬樣式 */
-        .scale-0-10-container { display: flex; justify-content: space-between; margin-top: 20px; padding: 0 10px; }
-        .scale-0-10-container label { display: flex; flex-direction: column; align-items: center; padding: 5px; border: none; margin: 0; justify-content: flex-end; }
-        .scale-0-10-container label:hover { background: none; }
+        /* 0-10 量表優化設計 */
+        .scale-labels { display: flex; justify-content: space-between; font-weight: bold; color: #555; margin-top: 15px; padding: 0 5px; font-size: 14px;}
+        .scale-0-10-container { display: flex; justify-content: space-between; margin-top: 10px; background: #fbfbfb; padding: 10px; border-radius: 8px; border: 1px solid #eee;}
+        .scale-0-10-container label { display: flex; flex-direction: column; align-items: center; padding: 5px; border: none; margin: 0; background: transparent; flex: 1;}
+        .scale-0-10-container label:hover { background: #e8f0fe; }
         .scale-0-10-container input[type="radio"] { margin: 0 0 8px 0; transform: scale(1.3); }
-        .scale-labels { display: flex; justify-content: space-between; font-weight: bold; color: #555; margin-top: 10px; padding: 0 10px; font-size: 15px;}
+
+        textarea.survey-textarea { width: 100%; font-size: 16px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; resize: vertical; box-sizing: border-box; font-family: inherit; }
     </style>
 </head>
 <body>
@@ -80,92 +82,151 @@
     <div id="survey-screen" class="screen">
         <div class="survey-container">
             <h1 style="margin-bottom: 5px;">實驗結束</h1>
-            <p style="margin-bottom: 30px; color: #666;">請協助完成以下回饋，所有資料僅供學術分析使用。</p>
+            <p style="margin-bottom: 20px; color: #666;">請協助完成以下回饋，所有資料僅供學術分析使用。</p>
             
+            <div class="survey-section-title">第一部分：貼文內容回顧</div>
+            <div class="survey-transition">首先，想請教您剛才閱讀的一些內容。</div>
+
             <div class="survey-q">
-                <h2>一、貼文內容回顧</h2>
-                
-                <h3>Q12. 交通部有關淡江大橋首日車流量的貼文中，請問首日總車流量大約為多少輛？</h3>
-                <label><input type="radio" name="q12" value="3240"> 3240</label>
-                <label><input type="radio" name="q12" value="6150"> 6150</label>
-                <label><input type="radio" name="q12" value="9560"> 9560</label>
-                <label><input type="radio" name="q12" value="12280"> 12280</label>
-                <hr style="border: 0; border-top: 1px dashed #ddd; margin: 25px 0;">
+                <h3>Q12. 交通部的貼文中，請問該貼文主題為何?</h3>
+                <label><input type="radio" name="q12" value="淡江大橋首日通車數"> 淡江大橋首日通車數</label>
+                <label><input type="radio" name="q12" value="最新重型機車規範"> 最新重型機車規範</label>
+                <label><input type="radio" name="q12" value="蘇花改近期工程計畫"> 蘇花改近期工程計畫</label>
+                <label><input type="radio" name="q12" value="紅燈右轉新罰則"> 紅燈右轉新罰則</label>
+            </div>
 
-                <h3>Q13. 臺北市衛生局有關鼠疫的鼠患防治的貼文中，請問各行政區大約已稽查多少間店家？</h3>
-                <label><input type="radio" name="q13" value="110"> 110</label>
-                <label><input type="radio" name="q13" value="220"> 220</label>
-                <label><input type="radio" name="q13" value="330"> 330</label>
-                <label><input type="radio" name="q13" value="440"> 440</label>
-                <hr style="border: 0; border-top: 1px dashed #ddd; margin: 25px 0;">
+            <div class="survey-q">
+                <h3>Q13. 臺灣電力公司的貼文中，請問該貼文主題為何?</h3>
+                <label><input type="radio" name="q13" value="臺電新電價計算公式"> 臺電新電價計算公式</label>
+                <label><input type="radio" name="q13" value="近期各類型發電價格變化量"> 近期各類型發電價格變化量</label>
+                <label><input type="radio" name="q13" value="上半年平均日發電量統計"> 上半年平均日發電量統計</label>
+                <label><input type="radio" name="q13" value="臺電新LOGO設計理念說明與澄清"> 臺電新LOGO設計理念說明與澄清</label>
+            </div>
 
-                <h3>Q14. 臺北市衛生局有關平均每日發電量的貼文中，請問上半年度平均每日發電量約為多少度？</h3>
-                <label><input type="radio" name="q14" value="755百萬度"> 755百萬度</label>
-                <label><input type="radio" name="q14" value="945百萬度"> 945百萬度</label>
-                <label><input type="radio" name="q14" value="1035百萬度"> 1035百萬度</label>
-                <label><input type="radio" name="q14" value="1300百萬度"> 1300百萬度</label>
-                <hr style="border: 0; border-top: 1px dashed #ddd; margin: 25px 0;">
+            <div class="survey-q">
+                <h3>Q14. 臺北市衛生局的貼文中，請問該貼文主題為何?</h3>
+                <label><input type="radio" name="q14" value="因鼠疫染病人數統計"> 因鼠疫染病人數統計</label>
+                <label><input type="radio" name="q14" value="衛生局衛生檢驗店家數量"> 衛生局衛生檢驗店家數量</label>
+                <label><input type="radio" name="q14" value="新型流感疫苗接種提醒"> 新型流感疫苗接種提醒</label>
+                <label><input type="radio" name="q14" value="高齡者免費健康檢查政策實施"> 高齡者免費健康檢查政策實施</label>
+            </div>
 
-                <h3>Q15. 高速公路局的貼文中，請問該貼文主題為何？</h3>
+            <div class="survey-q">
+                <h3>Q15. 高速公路局的貼文中，請問該貼文主題為何?</h3>
                 <label><input type="radio" name="q15" value="連假出行注意安全"> 連假出行注意安全，平安回家</label>
                 <label><input type="radio" name="q15" value="酒後勿開車"> 酒後勿開車，請改叫代駕或搭計程車</label>
                 <label><input type="radio" name="q15" value="工程封閉改道"> 部分路段因工程維護暫時封閉，建議改道</label>
                 <label><input type="radio" name="q15" value="高乘載管制"> 連假期間請注意高乘載管制時段</label>
-                <hr style="border: 0; border-top: 1px dashed #ddd; margin: 25px 0;">
+            </div>
 
-                <h3>Q16. 衛福部的貼文中，請問該貼文主題為何？</h3>
+            <div class="survey-q">
+                <h3>Q16. 衛福部的貼文中，請問該貼文主題為何?</h3>
                 <label><input type="radio" name="q16" value="勤洗手"> 提醒民眾勤洗手</label>
                 <label><input type="radio" name="q16" value="施打疫苗"> 提醒民眾施打疫苗</label>
                 <label><input type="radio" name="q16" value="領取口罩"> 提醒民眾領取口罩</label>
                 <label><input type="radio" name="q16" value="新政策實施"> 提醒民眾新政策實施</label>
-                <hr style="border: 0; border-top: 1px dashed #ddd; margin: 25px 0;">
+            </div>
 
-                <h3>Q17. 經濟部的貼文中，請問該貼文中出現哪種動物？</h3>
+            <div class="survey-q">
+                <h3>Q17. 經濟部的貼文中，請問該貼文中出現哪種動物?</h3>
                 <label><input type="radio" name="q17" value="台灣黑熊"> 台灣黑熊</label>
                 <label><input type="radio" name="q17" value="松鼠"> 松鼠</label>
                 <label><input type="radio" name="q17" value="北極熊"> 北極熊</label>
                 <label><input type="radio" name="q17" value="海龜"> 海龜</label>
             </div>
 
+            <div class="survey-section-title" style="margin-top: 40px;">第二部分：生成式 AI 與社群行為探討</div>
+            <div class="survey-transition">接下來，想請教您對於生成式人工智慧(Generative AI, 例如 Chat GPT, Gemini, Claude 等等)的一些看法：</div>
+
             <div class="survey-q">
-                <h2>二、AI標籤檢驗與態度</h2>
-                
-                <h3>Q18. 請問您剛才觀看貼文時，是否有注意到部分貼文擁有「AI資訊」標籤？若有，請問剛剛的貼文標籤是下列何種？</h3>
+                <h3>Q18. 請問您剛才觀看貼文時，是否有注意到部分貼文擁有「AI資訊」標籤?若有，請問剛剛的貼文標籤是下列何種?</h3>
                 <label class="img-option"><input type="radio" name="q18" value="1"> (1) <img src="Q/1.png" alt="選項1"></label>
                 <label class="img-option"><input type="radio" name="q18" value="2"> (2) <img src="Q/2.png" alt="選項2"></label>
                 <label class="img-option"><input type="radio" name="q18" value="3"> (3) <img src="Q/3.png" alt="選項3"></label>
                 <label class="img-option"><input type="radio" name="q18" value="4"> (4) <img src="Q/4.png" alt="選項4"></label>
                 <label><input type="radio" name="q18" value="5"> (5) 沒有注意到</label>
-                <hr style="border: 0; border-top: 1px dashed #ddd; margin: 25px 0;">
-
-                <h3>Q19. 整體而言，請問您對於 AI 生成的內容是非常信任、有點信任、不太信任還是一點也不信任？</h3>
-                <label><input type="radio" name="q19" value="非常信任"> 非常信任</label>
-                <label><input type="radio" name="q19" value="有點信任"> 有點信任</label>
-                <label><input type="radio" name="q19" value="不太信任"> 不太信任</label>
-                <label><input type="radio" name="q19" value="一點也不信任"> 一點也不信任</label>
-                <hr style="border: 0; border-top: 1px dashed #ddd; margin: 25px 0;">
-
-                <h3>Q20. 不同的人在社群媒體上可能有不同的使用行為。當您瀏覽社群媒體時，若政府的社群貼文出現在您的瀏覽頁面，請問您會迅速略過還是會仔細觀看？</h3>
-                <div class="scale-labels">
-                    <span>迅速略過</span>
-                    <span>仔細觀看</span>
-                </div>
-                <div class="scale-0-10-container">
-                    <label><input type="radio" name="q20" value="0">0</label>
-                    <label><input type="radio" name="q20" value="1">1</label>
-                    <label><input type="radio" name="q20" value="2">2</label>
-                    <label><input type="radio" name="q20" value="3">3</label>
-                    <label><input type="radio" name="q20" value="4">4</label>
-                    <label><input type="radio" name="q20" value="5">5</label>
-                    <label><input type="radio" name="q20" value="6">6</label>
-                    <label><input type="radio" name="q20" value="7">7</label>
-                    <label><input type="radio" name="q20" value="8">8</label>
-                    <label><input type="radio" name="q20" value="9">9</label>
-                    <label><input type="radio" name="q20" value="10">10</label>
-                </div>
             </div>
 
-            <button class="btn" onclick="submitSurvey()" style="margin-bottom: 50px;">提交問卷並結束</button>
+            <div class="survey-q">
+                <h3>Q19. 整體而言，請問您過去一個月內有多常使用生成式人工智慧 (包含生成內容、潤飾內容以及蒐集資訊等等)？</h3>
+                <label><input type="radio" name="q19" value="經常"> 經常</label>
+                <label><input type="radio" name="q19" value="有時"> 有時</label>
+                <label><input type="radio" name="q19" value="很少"> 很少</label>
+                <label><input type="radio" name="q19" value="從不"> 從不</label>
+            </div>
+
+            <div class="survey-q">
+                <h3>Q20. 請問您是否有購買付費版生成式人工智慧服務 (例如 Chat GPT Plus, Gemini Advanced, Claude Pro 等等)？</h3>
+                <label><input type="radio" name="q20" value="有"> 有</label>
+                <label><input type="radio" name="q20" value="曾經有，現在沒有"> 曾經有，現在沒有</label>
+                <label><input type="radio" name="q20" value="沒有"> 沒有</label>
+            </div>
+
+            <div class="survey-q">
+                <h3>Q21. 整體而言，請問您對於生成式人工智慧生成的內容是非常信任、有點信任、不太信任還是一點也不信任？</h3>
+                <label><input type="radio" name="q21" value="非常信任"> 非常信任</label>
+                <label><input type="radio" name="q21" value="有點信任"> 有點信任</label>
+                <label><input type="radio" name="q21" value="不太信任"> 不太信任</label>
+                <label><input type="radio" name="q21" value="一點也不信任"> 一點也不信任</label>
+            </div>
+
+            <div class="survey-transition" style="margin-top: 30px;">關於以下說法，若 0 是非常不同意、10 是非常同意，請問您會選擇多少？</div>
+
+            <div class="survey-q">
+                <h3>Q22. 我願意使用生成式人工智慧的服務。</h3>
+                <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
+                <div class="scale-0-10-container" id="scale-q22"></div>
+            </div>
+
+            <div class="survey-q">
+                <h3>Q23. 與生成式人工智慧互動我會感到開心。</h3>
+                <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
+                <div class="scale-0-10-container" id="scale-q23"></div>
+            </div>
+
+            <div class="survey-q">
+                <h3>Q24. 我很有可能會與生成式人工智慧互動。</h3>
+                <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
+                <div class="scale-0-10-container" id="scale-q24"></div>
+            </div>
+
+            <div class="survey-q">
+                <h3>Q25. 生成式人工智慧資訊的處理方式較缺乏人情味。</h3>
+                <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
+                <div class="scale-0-10-container" id="scale-q25"></div>
+            </div>
+
+            <div class="survey-q">
+                <h3>Q26. 在社群媒體中，我更偏好與人類接觸。</h3>
+                <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
+                <div class="scale-0-10-container" id="scale-q26"></div>
+            </div>
+
+            <div class="survey-q">
+                <h3>Q27. 人們在使用社群媒體的過程中需要情感交流。</h3>
+                <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
+                <div class="scale-0-10-container" id="scale-q27"></div>
+            </div>
+
+            <div class="survey-q">
+                <h3>Q28. 與生成式人工智慧互動缺乏了社交接觸。</h3>
+                <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
+                <div class="scale-0-10-container" id="scale-q28"></div>
+            </div>
+
+            <div class="survey-q" style="margin-top: 40px; border-top: 3px solid #1a73e8;">
+                <h3>Q29. 不同的人在社群媒體上可能有不同的使用行為。當政府的社群貼文出現在瀏覽頁面時，有些人會迅速略過這些貼文；也有些人會仔細觀看貼文內容。當您瀏覽社群媒體時，若政府的社群貼文出現在您的瀏覽頁面時，請問您通常會迅速略過還是會仔細觀看？</h3>
+                <div class="scale-labels"><span>0 (迅速略過)</span><span>10 (仔細觀看)</span></div>
+                <div class="scale-0-10-container" id="scale-q29"></div>
+            </div>
+
+            <div class="survey-q" style="margin-top: 40px; background: #fffcf0; border: 1px solid #ffd54f;">
+                <h3>Q30. 對於本研究的建議 (選填)：</h3>
+                <p style="font-size: 14px; color: #666; margin-top: -5px; margin-bottom: 10px;">無論是實驗過程的體驗、系統流暢度，或對貼文內容的想法，都歡迎您告訴我們！</p>
+                <textarea id="q30" name="q30" rows="4" class="survey-textarea" placeholder="請在此輸入您的建議..."></textarea>
+            </div>
+
+            <button class="btn" onclick="submitSurvey()" style="margin-bottom: 50px; background:#1a73e8; color:white; border:none; padding:15px 40px;">提交問卷並結束</button>
         </div>
     </div>
 
@@ -175,9 +236,24 @@
     </div>
 
     <script>
-        // 🌟 更新為您的 GAS Web App 網址
+        // 🌟 更新為您的新版 GAS Web App 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec"; 
+
+        function generateScaleHTML(questionName) {
+            let html = '';
+            for(let i=0; i<=10; i++) {
+                html += `<label><input type="radio" name="${questionName}" value="${i}">${i}</label>`;
+            }
+            return html;
+        }
         
+        document.addEventListener("DOMContentLoaded", () => {
+            for(let i=22; i<=29; i++) {
+                document.getElementById(`scale-q${i}`).innerHTML = generateScaleHTML(`q${i}`);
+            }
+        });
+
+        // 核心變數
         let eyeData = [];
         let surveyData = {}; 
         let isRecording = false;
@@ -185,7 +261,10 @@
         let isValidating = false;
         let validationSamples = [];
         let lastGazeTime = 0; 
-        const GAZE_INTERVAL = 50;
+        
+        // ★ 偵測頻率改為 20Hz (1000ms / 20 = 50ms)
+        const GAZE_INTERVAL = 50; 
+        
         let roundTimeout; 
         let isScrolling = false;
         let scrollTimeout = null;
@@ -201,15 +280,38 @@
         const sidFromUrl = urlParams.get('sid');
         const sessionID = sidFromUrl ? sidFromUrl : "TEST_" + Math.floor(100000 + Math.random() * 900000).toString();
 
+        // ★ 移除 Daily2
         const imagePools = {
             AD: ['AD_1.png', 'AD_2.png', 'AD_3.png', 'AD_4.png', 'AD_5.png', 'AD_6.png'],
             Daily: ['Daily_1.png', 'Daily_2.png', 'Daily_3.png', 'Daily_4.png', 'Daily_5.png', 'Daily_6.png'],
-            Daily2: ['Daily2_1.png', 'Daily2_2.png', 'Daily2_3.png', 'Daily2_4.png', 'Daily2_5.png', 'Daily2_6.png'],
             P_Post: ['P_Post_1.png', 'P_Post_2.png', 'P_Post_3.png', 'P_Post_4.png', 'P_Post_5.png', 'P_Post_6.png']
         };
         let gPostNumbers = [1, 2, 3, 4, 5, 6]; 
-        let totalRounds = 6;
+        
+        // ★ 縮減為 3 輪
+        let totalRounds = 3; 
         let currentRound = 1;
+        let masterImageQueue = []; 
+
+        // 將 24 張圖大洗牌排隊
+        function prepareImageQueue() {
+            ['AD', 'Daily', 'P_Post'].forEach(folder => {
+                imagePools[folder].forEach(imgName => {
+                    masterImageQueue.push(`${folder}/${imgName}`);
+                });
+            });
+
+            gPostNumbers.forEach(gNum => {
+                let isAI = Math.random() > 0.5;
+                let gImgName = isAI ? `G_Post_${gNum}_AI.png` : `G_Post_${gNum}.png`;
+                masterImageQueue.push(`G_Post/${gImgName}`);
+            });
+
+            for (let i = masterImageQueue.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [masterImageQueue[i], masterImageQueue[j]] = [masterImageQueue[j], masterImageQueue[i]];
+            }
+        }
 
         async function initExperiment() {
             const btn = document.getElementById('start-btn');
@@ -258,9 +360,7 @@
                     }
                 }).begin();
                 
-                // 隱藏 WebGazer 追蹤視線的紅點
                 webgazer.showPredictionPoints(false);
-
                 document.getElementById('start-screen').style.display = 'none';
                 webgazer.showVideo(true); startCalib();
             } catch (err) { alert("啟動失敗！請確認瀏覽器已允許攝影機權限。"); btn.disabled = false; btn.innerText = "允許攝影機權限並開始"; }
@@ -289,7 +389,11 @@
                 if (Math.max(0, Math.round(100 - (avgDist / 4))) < 40) { 
                     alert("視線偏移較大，請保持頭部穩定並重新校正"); startCalib(); 
                 } else { 
-                    document.getElementById('calib-hint').style.display = 'none'; webgazer.showVideo(false); loadRound(); 
+                    document.getElementById('calib-hint').style.display = 'none'; 
+                    webgazer.showVideo(false); 
+                    
+                    prepareImageQueue(); // 洗牌所有圖片
+                    loadRound(); 
                 }
             }, 3000);
         }
@@ -302,23 +406,11 @@
                 document.getElementById('survey-screen').style.display = 'flex';
                 return;
             }
-            let roundImages = [];
-            ['AD', 'Daily', 'Daily2', 'P_Post'].forEach(folder => {
-                let pool = imagePools[folder];
-                if (pool.length > 0) {
-                    let idx = Math.floor(Math.random() * pool.length);
-                    let imgName = pool.splice(idx, 1)[0];
-                    roundImages.push(`${folder}/${imgName}`);
-                }
-            });
-            if (gPostNumbers.length > 0) {
-                let gIdx = Math.floor(Math.random() * gPostNumbers.length);
-                let gNum = gPostNumbers.splice(gIdx, 1)[0];
-                let isAI = Math.random() > 0.5;
-                let gImgName = isAI ? `G_Post_${gNum}_AI.png` : `G_Post_${gNum}.png`;
-                roundImages.push(`G_Post/${gImgName}`);
-            }
-            roundImages.sort(() => Math.random() - 0.5);
+            
+            // ★ 每輪精準抽取 8 張圖
+            let startIndex = (currentRound - 1) * 8;
+            let roundImages = masterImageQueue.slice(startIndex, startIndex + 8);
+            
             const wrapper = document.getElementById('posts-wrapper');
             wrapper.innerHTML = '';
             roundImages.forEach(src => {
@@ -327,13 +419,16 @@
                 let img = document.createElement('img');
                 img.src = src;
                 img.dataset.filename = src.split('/').pop();
+                img.setAttribute("loading", "lazy");
                 div.appendChild(img);
                 wrapper.appendChild(div);
             });
             document.getElementById('experiment-stage').style.display = 'flex';
             document.getElementById('experiment-stage').scrollTop = 0;
             setTimeout(() => { isRecording = true; }, 300);
-            roundTimeout = setTimeout(() => { nextRound(); }, 45000);
+            
+            // ★ 時間上限改為 120000 毫秒 (2 分鐘)
+            roundTimeout = setTimeout(() => { nextRound(); }, 120000);
         }
 
         function nextRound() {
@@ -341,33 +436,23 @@
         }
 
         function submitSurvey() {
-            let q12 = document.querySelector('input[name="q12"]:checked');
-            let q13 = document.querySelector('input[name="q13"]:checked');
-            let q14 = document.querySelector('input[name="q14"]:checked');
-            let q15 = document.querySelector('input[name="q15"]:checked');
-            let q16 = document.querySelector('input[name="q16"]:checked');
-            let q17 = document.querySelector('input[name="q17"]:checked');
-            let q18 = document.querySelector('input[name="q18"]:checked');
-            let q19 = document.querySelector('input[name="q19"]:checked');
-            let q20 = document.querySelector('input[name="q20"]:checked');
-
-            if (!q12 || !q13 || !q14 || !q15 || !q16 || !q17 || !q18 || !q19 || !q20) {
-                alert("請確認 Q12 到 Q20 每一題皆已完成作答！");
-                return;
+            let answers = {};
+            for(let i=12; i<=29; i++) {
+                let el = document.querySelector(`input[name="q${i}"]:checked`);
+                if(!el) {
+                    alert(`請確認所有題目皆已完成作答！（您尚未作答 Q${i}）`);
+                    return;
+                }
+                answers[`q${i}`] = el.value;
             }
+
+            // ★ 擷取 Q30 的文字，若無則為空字串 (不強制必填)
+            answers['q30'] = document.getElementById('q30').value.trim();
 
             surveyData = {
                 sid: sessionID,
-                q12: q12.value,
-                q13: q13.value,
-                q14: q14.value,
-                q15: q15.value,
-                q16: q16.value,
-                q17: q17.value,
-                q18: q18.value,
-                q19: q19.value,
-                q20: q20.value,
-                ts: Date.now()
+                ts: Date.now(),
+                ...answers
             };
 
             document.getElementById('survey-screen').style.display = 'none';
