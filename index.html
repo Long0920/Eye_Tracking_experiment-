@@ -496,12 +496,8 @@
                     body: payload 
                 });
                 
-                document.getElementById('status').innerText = "實驗數據上傳成功！正在引導至最後的基本資料填寫...";
-                
-                // 🌟 實務串接：自動跳轉至 SurveyCake 並夾帶隱藏的 sessionID 參數
-                setTimeout(() => {
-                    window.location.href = `https://www.surveycake.com/s/你的問卷代碼?sid=${sessionID}`;
-                }, 2000);
+                // 🌟 因為這是實驗終點站，直接顯示成功訊息，讓受試者可以關閉視窗
+                document.getElementById('status').innerText = "上傳成功！感謝您的參與，您可直接關閉此視窗。";
 
             } catch (err) {
                 document.getElementById('status').innerText = "上傳失敗，請稍後再試或聯絡研究員。";
