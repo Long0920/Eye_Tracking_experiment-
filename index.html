@@ -98,13 +98,13 @@
             <div class="survey-q">
                 <h3>Q13. 臺灣電力公司的貼文中，請問該貼文主題為何?</h3>
                 <label><input type="radio" name="q13" value="臺電新電價計算公式"> 臺電新電價計算公式</label>
-                <label><input type="radio" name="q13" value="近期各類型發電價格變化量"> 近期各類型發發電價格變化量</label>
+                <label><input type="radio" name="q13" value="近期各類型發電價格變化量"> 近期各類型發電價格變化量</label>
                 <label><input type="radio" name="q13" value="上半年平均日發電量統計"> 上半年平均日發電量統計</label>
                 <label><input type="radio" name="q13" value="臺電新LOGO設計理念說明與澄清"> 臺電新LOGO設計理念說明與澄清</label>
             </div>
 
             <div class="survey-q">
-                <h3>Q14. 臺北市衛生局的貼文中，請問該貼文主題為何?</h3>
+                <h3>Q14. 臺北市衛生局的貼文中，請問該貼文主題婚何?</h3>
                 <label><input type="radio" name="q14" value="因鼠疫染病人數統計"> 因鼠疫染病人數統計</label>
                 <label><input type="radio" name="q14" value="衛生局衛生檢驗店家數量"> 衛生局衛生檢驗店家數量</label>
                 <label><input type="radio" name="q14" value="新型流感疫苗接種提醒"> 新型流感疫苗接種提醒</label>
@@ -236,7 +236,6 @@
     </div>
 
     <script>
-        // 🌟 更新為您的新版 GAS Web App 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec"; 
 
         function generateScaleHTML(questionName) {
@@ -261,8 +260,6 @@
         let isValidating = false;
         let validationSamples = [];
         let lastGazeTime = 0; 
-        
-        // ★ 偵測頻率改為 20Hz (1000ms / 20 = 50ms)
         const GAZE_INTERVAL = 50; 
         
         let roundTimeout; 
@@ -276,26 +273,28 @@
             scrollTimeout = setTimeout(() => { isScrolling = false; }, 200);
         }, { passive: true });
 
-        // 🌟 核心修改：接收 SurveyCake 傳過來的動態 ID 或 AUTO 線索
+        // 🌟 核心接收邏輯：讀取 SurveyCake 純文字感謝頁自動替換出來的自訂三位數
         const urlParams = new URLSearchParams(window.location.search);
         let sidFromUrl = urlParams.get('sid');
 
-        // 🌟 免費版 SurveyCake 專用黑科技自動辨識編號邏輯
-        if (sidFromUrl === "AUTO" || !sidFromUrl || sidFromUrl === "" || sidFromUrl === "") {
+        // 🌟 自動辨識與精準時間特徵碼封裝（例如受訪者填 777，會自動生成 SC_777_05192138）
+        if (sidFromUrl && sidFromUrl !== "" && sidFromUrl !== "AUTO" && sidFromUrl.trim() !== "") {
+            const userToken = sidFromUrl.trim();
             const now = new Date();
-            const timeStr = now.getFullYear() + 
-                            String(now.getMonth() + 1).padStart(2, '0') + 
+            const timeStr = String(now.getMonth() + 1).padStart(2, '0') + 
                             String(now.getDate()).padStart(2, '0') + 
                             String(now.getHours()).padStart(2, '0') + 
                             String(now.getMinutes()).padStart(2, '0');
-            const randomNum = Math.floor(100 + Math.random() * 900); 
             
-            sidFromUrl = "SC_" + timeStr + "_" + randomNum; // 生成高識別度的唯一時間戳編號，如: SC_202605192130_582
+            sidFromUrl = "SC_" + userToken + "_" + timeStr;
+        } else {
+            // 防噪底線：萬一網址沒帶到參數（例如受訪者自己打錯網址進來），自動用亂數補足，避免系統崩潰
+            sidFromUrl = "RAND_" + Math.floor(100000 + Math.random() * 900000).toString();
         }
 
         const sessionID = sidFromUrl;
 
-        // 原始圖片對照池（移除 Daily2）
+        // 原始圖片對照池
         const imagePools = {
             AD: ['AD_1.png', 'AD_2.png', 'AD_3.png', 'AD_4.png', 'AD_5.png', 'AD_6.png'],
             Daily: ['Daily_1.png', 'Daily_2.png', 'Daily_3.png', 'Daily_4.png', 'Daily_5.png', 'Daily_6.png'],
@@ -303,19 +302,15 @@
         };
         let gPostNumbers = [1, 2, 3, 4, 5, 6]; 
         
-        // 縮減為 3 輪
         let totalRounds = 3; 
         let currentRound = 1;
-
-        // 🌟 建立獨立的抽牌堆架構
         let activePools = { AD: [], Daily: [], P_Post: [], G_Post: [] };
 
-        // 🌟 初始化洗牌函數：保證 G_Post 同一編號只隨機出現 1 次
         function prepareImageQueue() {
             activePools.AD = [...imagePools.AD];
             activePools.Daily = [...imagePools.Daily];
             activePools.P_Post = [...imagePools.P_Post];
-            activePools.G_Post = []; // 清空重置
+            activePools.G_Post = []; 
             
             let tempGList = [...gPostNumbers];
             tempGList.forEach(gNum => {
@@ -404,7 +399,7 @@
                     document.getElementById('calib-hint').style.display = 'none'; 
                     webgazer.showVideo(false); 
                     
-                    prepareImageQueue(); // 執行分層抽樣洗牌
+                    prepareImageQueue(); 
                     loadRound(); 
                 }
             }, 3000);
@@ -419,17 +414,11 @@
                 return;
             }
             
-            // 🌟 每一輪，強制從四個資料夾「各隨機抽2張」組成該輪的 8 張圖
             let roundImages = [];
-            
             ['AD', 'Daily', 'P_Post', 'G_Post'].forEach(folder => {
                 let pool = activePools[folder];
-                
-                // 隨機抽第 1 張並自陣列移除
                 let idx1 = Math.floor(Math.random() * pool.length);
                 let img1 = pool.splice(idx1, 1)[0];
-                
-                // 隨機抽第 2 張並自陣列移除
                 let idx2 = Math.floor(Math.random() * pool.length);
                 let img2 = pool.splice(idx2, 1)[0];
                 
@@ -442,7 +431,6 @@
                 }
             });
             
-            // 🌟 將選定的 8 張圖打亂動態順序，打破固定出現規律
             roundImages.sort(() => Math.random() - 0.5);
             
             const wrapper = document.getElementById('posts-wrapper');
@@ -461,7 +449,6 @@
             document.getElementById('experiment-stage').scrollTop = 0;
             setTimeout(() => { isRecording = true; }, 300);
             
-            // ★ 時間上限為 2 分鐘
             roundTimeout = setTimeout(() => { nextRound(); }, 120000);
         }
 
@@ -509,7 +496,7 @@
                     headers: { 'Content-Type': 'text/plain' }, 
                     body: payload 
                 });
-                // 🌟 作為流程終點站，數據寫入 GAS 試算表後顯示提示訊息
+                // 🌟 當作實驗終點站，數據完全送出後顯示靜態成功訊息，受訪者即可關閉頁面
                 document.getElementById('status').innerText = "上傳成功！感謝您的參與，您現在可直接關閉此瀏覽器分頁。";
             } catch (err) {
                 document.getElementById('status').innerText = "上傳失敗，請稍後再試或聯絡研究員。";
