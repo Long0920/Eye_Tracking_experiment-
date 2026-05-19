@@ -104,7 +104,7 @@
             </div>
 
             <div class="survey-q">
-                <h3>Q14. 臺北市衛生局的貼文中，請問該貼文主題婚何?</h3>
+                <h3>Q14. 臺北市衛生局的貼文中，請問該貼文主題為何?</h3>
                 <label><input type="radio" name="q14" value="因鼠疫染病人數統計"> 因鼠疫染病人數統計</label>
                 <label><input type="radio" name="q14" value="衛生局衛生檢驗店家數量"> 衛生局衛生檢驗店家數量</label>
                 <label><input type="radio" name="q14" value="新型流感疫苗接種提醒"> 新型流感疫苗接種提醒</label>
@@ -271,25 +271,25 @@
             isScrolling = true;
             clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(() => { isScrolling = false; }, 200);
-        }, { passive: true });
+        });
 
-        // 🌟 核心接收邏輯：讀取 SurveyCake 純文字感謝頁自動替換出來的自訂三位數
+        // 🌟 完全無痛、零填寫的靜默生成機制
         const urlParams = new URLSearchParams(window.location.search);
         let sidFromUrl = urlParams.get('sid');
 
-        // 🌟 自動辨識與精準時間特徵碼封裝（例如受訪者填 777，會自動生成 SC_777_05192138）
-        if (sidFromUrl && sidFromUrl !== "" && sidFromUrl !== "AUTO" && sidFromUrl.trim() !== "") {
-            const userToken = sidFromUrl.trim();
+        // 因為我們給的網址很乾淨，沒有 sid，系統會自動啟動以下程式碼
+        if (!sidFromUrl || sidFromUrl.trim() === "") {
             const now = new Date();
+            // 抓取精準到「秒」的時間 (例如：05月19日21點26分05秒 -> 0519212605)
             const timeStr = String(now.getMonth() + 1).padStart(2, '0') + 
                             String(now.getDate()).padStart(2, '0') + 
                             String(now.getHours()).padStart(2, '0') + 
-                            String(now.getMinutes()).padStart(2, '0');
+                            String(now.getMinutes()).padStart(2, '0') + 
+                            String(now.getSeconds()).padStart(2, '0');
+            // 後面加上 3 位隨機數，確保同一秒按進來的人也不會撞號
+            const randomNum = Math.floor(100 + Math.random() * 900); 
             
-            sidFromUrl = "SC_" + userToken + "_" + timeStr;
-        } else {
-            // 防噪底線：萬一網址沒帶到參數（例如受訪者自己打錯網址進來），自動用亂數補足，避免系統崩潰
-            sidFromUrl = "RAND_" + Math.floor(100000 + Math.random() * 900000).toString();
+            sidFromUrl = "SC_" + timeStr + "_" + randomNum; 
         }
 
         const sessionID = sidFromUrl;
@@ -496,7 +496,6 @@
                     headers: { 'Content-Type': 'text/plain' }, 
                     body: payload 
                 });
-                // 🌟 當作實驗終點站，數據完全送出後顯示靜態成功訊息，受訪者即可關閉頁面
                 document.getElementById('status').innerText = "上傳成功！感謝您的參與，您現在可直接關閉此瀏覽器分頁。";
             } catch (err) {
                 document.getElementById('status').innerText = "上傳失敗，請稍後再試或聯絡研究員。";
