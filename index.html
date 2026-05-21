@@ -19,7 +19,7 @@
         .survey-q label { display: block; margin: 10px 0; cursor: pointer; font-size: 15px; padding: 5px 10px; border-radius: 6px; transition: background 0.2s;}
         .survey-q label:hover { background: #f0f4f8; }
         .survey-q input[type="radio"] { margin-right: 12px; transform: scale(1.2); }
-        .survey-q input[type="text"], .survey-q select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 15px; }
+        .survey-q input[type="text"], .survey-q input[type="number"], .survey-q select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 15px; }
         textarea.survey-textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 15px; resize: vertical; box-sizing: border-box; }
         
         .img-option { display: flex; align-items: center; }
@@ -137,18 +137,21 @@
 
             <div class="survey-q">
                 <h3>Q8. 出生年月<br>請問您是民國幾年幾月出生的？</h3>
-                <div style="margin-bottom: 10px;">
-                    民國 <input type="text" id="q8_y" style="width: 60px;" placeholder="年"> 年 
-                    <input type="text" id="q8_m" style="width: 60px;" placeholder="月"> 月
+                <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+                    民國 <input type="number" id="q8_y" style="width: 70px;" placeholder="年"> 年 
+                    <input type="number" id="q8_m" style="width: 50px;" placeholder="月"> 月
                 </div>
                 <label><input type="checkbox" id="q8_refuse" value="95"> (95) 拒答</label>
             </div>
 
             <div class="survey-q">
                 <h3>Q9. 性別<br>請問您的性別是？</h3>
-                <label><input type="radio" name="q9" value="男性"> (1) 男性</label>
-                <label><input type="radio" name="q9" value="女性"> (2) 女性</label>
-                <label><input type="radio" name="q9" value="其他"> (90) 其他</label>
+                <label><input type="radio" name="q9" value="男性" onclick="document.getElementById('q9_other_text').style.display='none'"> (1) 男性</label>
+                <label><input type="radio" name="q9" value="女性" onclick="document.getElementById('q9_other_text').style.display='none'"> (2) 女性</label>
+                <label>
+                    <input type="radio" name="q9" value="其他" onclick="document.getElementById('q9_other_text').style.display='inline-block'"> (90) 其他 
+                    <input type="text" id="q9_other_text" style="display:none; width: 120px; margin-left: 10px; padding: 5px;" placeholder="請註明性別">
+                </label>
             </div>
 
             <div class="survey-q">
@@ -172,7 +175,7 @@
             </div>
 
             <div class="survey-q">
-                <h3>Q11. SES<br>一般人認為家庭的社會地位有高低的不同，假設有一把量尺，1代表家庭的社會地位很低，10代表家庭的社會地位很高。<br>在1（很低）到10（很高）之間，請問您覺得目前您家庭的社會地位是屬於哪一個位置？</h3>
+                <h3>Q11. SES<br>一般人認為自己家庭的社會地位有高低的不同，假設有一把量尺，0代表家庭的社會地位很低，10代表家庭的社會地位很高。<br>在1（很低）到10（很高）之間，請問您覺得目前您家庭的社會地位是屬於哪一個位置？</h3>
                 <div class="scale-labels"><span>1 (很低)</span><span>10 (很高)</span></div>
                 <div class="scale-0-10-container" id="scale-q11"></div>
             </div>
@@ -181,7 +184,7 @@
         </div>
     </div>
 
-    <div id="calib-hint">請視線跟著游標，點擊畫面上的紅點各 5 次</div>
+    <div id="calib-hint">請視線跟著游標，點擊畫面上的紅點直到紅點消失</div>
     <div id="validation-dot"></div>
     <div id="calib-zone">
         <button class="Calibration" id="Pt1" onclick="calibClick(this)"></button>
@@ -393,14 +396,11 @@
         let isScrolling = false;
         let scrollTimeout = null;
 
-        // 🌟 圖片抽取邏輯更新 🌟
-        // AD, Daily, P_Post 現各只有 3 張
         const imagePools = {
             AD: ['AD_1.png', 'AD_2.png', 'AD_3.png'],
             Daily: ['Daily_1.png', 'Daily_2.png', 'Daily_3.png'],
             P_Post: ['P_Post_1.png', 'P_Post_2.png', 'P_Post_3.png']
         };
-        // G_Post 維持 6 張
         let gPostNumbers = [1, 2, 3, 4, 5, 6]; 
         let totalRounds = 3; 
         let currentRound = 1;
@@ -436,14 +436,26 @@
                 alert(`請確認教育程度皆已作答！`); return;
             }
 
-            // 處理 Q8 拒答邏輯
+            // 處理 Q8 拒答與輸入邏輯
             let isRefused = document.getElementById('q8_refuse').checked;
             let q8y = document.getElementById('q8_y').value.trim();
             let q8m = document.getElementById('q8_m').value.trim();
             if(!isRefused && (!q8y || !q8m)) {
-                alert(`請輸入出生年月或勾選拒答！`); return;
+                alert(`請輸入出生年月（民國/月）或勾選拒答！`); return;
             }
-            allData.survey.q8 = isRefused ? "95" : `${q8y}年${q8m}月`;
+            allData.survey.q8 = isRefused ? "95" : `民國${q8y}年${q8m}月`;
+
+            // 處理 Q9 性別「其他」填寫邏輯
+            let q9Val = getVal('q9');
+            if(q9Val === '其他') {
+                let otherText = document.getElementById('q9_other_text').value.trim();
+                if(!otherText) {
+                    alert("請在「其他」欄位填寫您的性別！"); return;
+                }
+                allData.survey.q9 = `其他(${otherText})`;
+            } else {
+                allData.survey.q9 = q9Val;
+            }
 
             // 存入問卷數據
             allData.survey.q1 = getVal('q1');
@@ -453,7 +465,6 @@
             allData.survey.q5 = getVal('q5');
             allData.survey.q6 = getVal('q6');
             allData.survey.q7 = getVal('q7');
-            allData.survey.q9 = getVal('q9');
             allData.survey.q10 = document.getElementById('q10').value;
             allData.survey.q11 = getVal('q11');
 
@@ -516,7 +527,7 @@
 
         function startCalib() {
             calibHits = 0;
-            document.getElementById('calib-hint').innerText = "請視線跟著游標，點擊畫面上的紅點各 5 次";
+            document.getElementById('calib-hint').innerText = "請視線跟著游標，點擊畫面上的紅點直到紅點消失";
             document.getElementById('calib-hint').style.display = 'block';
             document.querySelectorAll('.Calibration').forEach(el => { el.style.display = 'block'; el.dataset.n = 0; el.style.opacity = 1; });
         }
@@ -568,7 +579,6 @@
             
             let roundImages = [];
             
-            // AD, Daily, P_Post 各抽取 1 張
             ['AD', 'Daily', 'P_Post'].forEach(folder => {
                 let pool = activePools[folder];
                 if(pool.length > 0) {
@@ -578,17 +588,15 @@
                 }
             });
             
-            // G_Post 抽取 2 張
             for(let i=0; i<2; i++) {
                 let pool = activePools['G_Post'];
                 if(pool.length > 0) {
                     let idx = Math.floor(Math.random() * pool.length);
                     let img = pool.splice(idx, 1)[0];
-                    roundImages.push(img); // G_Post 陣列內已包含資料夾前綴
+                    roundImages.push(img); 
                 }
             }
             
-            // 將抽出的 5 張打亂順序
             roundImages.sort(() => Math.random() - 0.5);
             
             const wrapper = document.getElementById('posts-wrapper');
