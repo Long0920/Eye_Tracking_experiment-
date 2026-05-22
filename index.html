@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8">
-    <title>社群媒體研究</title>
+    <title>社群媒體研究 - 政治大學政治學系</title>
     <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background: #f0f2f5; color: #333; overflow-x: hidden; }
@@ -140,6 +140,8 @@
                 <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
                     民國 <input type="number" id="q8_y" style="width: 70px;" min="1" max="115" placeholder="年"> 年 
                     <input type="number" id="q8_m" style="width: 50px;" min="1" max="12" placeholder="月"> 月
+                </div>
+                <label><input type="checkbox" id="q8_refuse" value="95"> 拒答</label>
             </div>
 
             <div class="survey-q">
@@ -682,6 +684,9 @@
             }
             allData.survey.q30 = document.getElementById('q30').value.trim();
             allData.survey.ts = Date.now();
+            
+            // 🌟 關鍵補救：將 sid 寫入 survey 物件，確保 GAS 能在 SurveyData 表格寫入 SessionID
+            allData.survey.sid = sessionID;
 
             // 🌟 將收集到的 15 張貼文順序，封裝進 survey 物件中準備送給 GAS
             for(let i = 0; i < 15; i++) {
