@@ -138,8 +138,8 @@
             <div class="survey-q">
                 <h3>Q8. 出生年月<br>請問您是民國幾年幾月出生的？</h3>
                 <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
-                    民國 <input type="number" id="q8_y" style="width: 70px;" placeholder="年"> 年 
-                    <input type="number" id="q8_m" style="width: 50px;" placeholder="月"> 月
+                    民國 <input type="number" id="q8_y" style="width: 70px;" min="1" max="115" placeholder="年"> 年 
+                    <input type="number" id="q8_m" style="width: 50px;" min="1" max="12" placeholder="月"> 月
                 </div>
                 <label><input type="checkbox" id="q8_refuse" value="95"> 拒答</label>
             </div>
@@ -175,7 +175,7 @@
             </div>
 
             <div class="survey-q">
-                <h3>Q11. SES<br>一般人認為自己家庭的社會地位有高低的不同，假設有一把量尺，1代表家庭的社會地位很低，10代表家庭的社會地位很高。<br>在1（很低）到10（很高）之間，請問您覺得目前您家庭的社會地位是屬於哪一個位置？</h3>
+                <h3>Q11. 一般人認為自己家庭的社會地位有高低的不同，若1代表家庭的社會地位很低，10代表家庭的社會地位很高。<br>在1（很低）到10（很高）之間，請問您覺得目前您家庭的社會地位是屬於哪一個位置？</h3>
                 <div class="scale-labels"><span>1 (很低)</span><span>10 (很高)</span></div>
                 <div class="scale-0-10-container" id="scale-q11"></div>
             </div>
@@ -184,7 +184,7 @@
         </div>
     </div>
 
-    <div id="calib-hint">請視線跟著游標，點擊畫面上的紅點直到紅點消失</div>
+    <div id="calib-hint">請視線跟著游標，點擊畫面上的紅點五次，直到紅點消失</div>
     <div id="validation-dot"></div>
     <div id="calib-zone">
         <button class="Calibration" id="Pt1" onclick="calibClick(this)"></button>
@@ -379,7 +379,6 @@
             }
         });
 
-        // 核心變數與 SessionID
         const now = new Date();
         const timeStr = String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');
         const sessionID = "NCCU_" + timeStr + "_" + Math.floor(100 + Math.random()*900);
@@ -387,6 +386,7 @@
         let allData = { sid: sessionID, eye: [], survey: {} };
         
         let isRecording = false;
+        let calibAttempts = 0; // 🌟 新增變數：紀錄校正次數
         let calibHits = 0;
         let isValidating = false;
         let validationSamples = [];
@@ -427,7 +427,6 @@
         }
 
         async function initEyeTracking() {
-            // Q1-Q11 驗證防呆
             let reqFields = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q9', 'q11'];
             for(let f of reqFields) {
                 if(!getVal(f)) { alert(`請確認所有選擇題皆已作答！`); return; }
@@ -436,16 +435,26 @@
                 alert(`請確認教育程度皆已作答！`); return;
             }
 
-            // 處理 Q8 拒答與輸入邏輯
+            // 🌟 Q8 的值域驗證邏輯
             let isRefused = document.getElementById('q8_refuse').checked;
-            let q8y = document.getElementById('q8_y').value.trim();
-            let q8m = document.getElementById('q8_m').value.trim();
-            if(!isRefused && (!q8y || !q8m)) {
-                alert(`請輸入出生年月（民國/月）或勾選拒答！`); return;
+            let q8y_str = document.getElementById('q8_y').value.trim();
+            let q8m_str = document.getElementById('q8_m').value.trim();
+            
+            if(!isRefused) {
+                if(!q8y_str || !q8m_str) {
+                    alert(`請輸入出生年月（民國/月）或勾選拒答！`); return;
+                }
+                let q8y = parseInt(q8y_str);
+                let q8m = parseInt(q8m_str);
+                if (q8y < 1 || q8y > 115) {
+                    alert(`出生年份（民國）必須在 1 到 115 之間！`); return;
+                }
+                if (q8m < 1 || q8m > 12) {
+                    alert(`出生月份必須在 1 到 12 之間！`); return;
+                }
             }
-            allData.survey.q8 = isRefused ? "95" : `民國${q8y}年${q8m}月`;
+            allData.survey.q8 = isRefused ? "95" : `民國${q8y_str}年${q8m_str}月`;
 
-            // 處理 Q9 性別「其他」填寫邏輯
             let q9Val = getVal('q9');
             if(q9Val === '其他') {
                 let otherText = document.getElementById('q9_other_text').value.trim();
@@ -457,7 +466,6 @@
                 allData.survey.q9 = q9Val;
             }
 
-            // 存入問卷數據
             allData.survey.q1 = getVal('q1');
             allData.survey.q2 = getVal('q2');
             allData.survey.q3 = getVal('q3');
@@ -525,9 +533,11 @@
             }
         }
 
+        // 🌟 校正開始與上限判定邏輯
         function startCalib() {
+            calibAttempts++;
             calibHits = 0;
-            document.getElementById('calib-hint').innerText = "請視線跟著游標，點擊畫面上的紅點直到紅點消失";
+            document.getElementById('calib-hint').innerText = "請視線跟著游標，點擊畫面上的紅點五次，直到紅點消失";
             document.getElementById('calib-hint').style.display = 'block';
             document.querySelectorAll('.Calibration').forEach(el => { el.style.display = 'block'; el.dataset.n = 0; el.style.opacity = 1; });
         }
@@ -542,12 +552,31 @@
             document.getElementById('calib-hint').innerText = "請盯著藍點 3 秒不要動";
             document.getElementById('validation-dot').style.display = 'block';
             isValidating = true;
+            validationSamples = []; // 重置驗證樣本
+            
             setTimeout(() => {
-                isValidating = false; document.getElementById('validation-dot').style.display = 'none';
+                isValidating = false; 
+                document.getElementById('validation-dot').style.display = 'none';
+                
                 let avgDist = validationSamples.reduce((a, b) => a + b, 0) / validationSamples.length;
-                if (Math.max(0, Math.round(100 - (avgDist / 4))) < 40) { 
-                    alert("視線偏移較大，請保持頭部穩定並重新校正"); startCalib(); 
+                let accuracy = Math.max(0, Math.round(100 - (avgDist / 4)));
+                
+                if (accuracy < 40) { 
+                    if (calibAttempts >= 3) {
+                        // 🌟 第三次失敗，紀錄為「否」並強行進入實驗
+                        alert("校正已達三次上限，系統將直接為您進入實驗。");
+                        allData.survey.calibSuccess = "否";
+                        document.getElementById('calib-hint').style.display = 'none'; 
+                        webgazer.showVideo(false); 
+                        prepareImageQueue(); 
+                        loadRound(); 
+                    } else {
+                        alert(`視線偏移較大，請保持頭部穩定並重新校正 (第 ${calibAttempts} 次，最多 3 次)`); 
+                        startCalib(); 
+                    }
                 } else { 
+                    // 🌟 成功校正，紀錄為「是」
+                    allData.survey.calibSuccess = "是";
                     document.getElementById('calib-hint').style.display = 'none'; 
                     webgazer.showVideo(false); 
                     prepareImageQueue(); 
