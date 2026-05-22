@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8">
-    <title>社群媒體研究 - 政治大學政治學系</title>
+    <title>社群媒體研究</title>
     <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background: #f0f2f5; color: #333; overflow-x: hidden; }
@@ -364,6 +364,14 @@
         // 🌟🌟🌟 請將此處換成您最新部署的 GAS Web App 網址 🌟🌟🌟
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec"; 
 
+        // 🌟 嚴謹的 Fisher-Yates 洗牌函數 🌟
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
         function generateScaleHTML(questionName, start=0, end=10) {
             let html = '';
             for(let i=start; i<=end; i++) {
@@ -385,6 +393,9 @@
         
         let allData = { sid: sessionID, eye: [], survey: {} };
         
+        // 🌟 新增：用來記錄總共 15 張貼文出現的順序
+        let displayedPostsOrder = [];
+
         let isRecording = false;
         let calibAttempts = 0; 
         let calibHits = 0;
@@ -589,13 +600,9 @@
             
             let tempGList = [...gPostNumbers];
             
-            // 隨機打亂 1 到 6 的順序 (Fisher-Yates Shuffle)
-            for (let i = tempGList.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [tempGList[i], tempGList[j]] = [tempGList[j], tempGList[i]];
-            }
+            // 🌟 嚴謹洗牌 G_Post 編號
+            shuffle(tempGList);
             
-            // 前 3 個加上 AI 標籤，後 3 個不加標籤，確保絕對的 3有3無
             tempGList.forEach((gNum, index) => {
                 let isAI = (index < 3); 
                 let gImgName = isAI ? `G_Post_${gNum}_AI.png` : `G_Post_${gNum}.png`;
@@ -630,11 +637,15 @@
                 }
             }
             
-            roundImages.sort(() => Math.random() - 0.5);
+            // 🌟 嚴謹洗牌本輪的 5 張圖片順序
+            shuffle(roundImages);
             
             const wrapper = document.getElementById('posts-wrapper');
             wrapper.innerHTML = '';
             roundImages.forEach(src => {
+                // 🌟 將抽出的圖片檔名，依照真實出現順序紀錄到全域陣列中
+                displayedPostsOrder.push(src.split('/').pop());
+
                 let div = document.createElement('div');
                 div.className = 'post-container';
                 let img = document.createElement('img');
@@ -673,6 +684,11 @@
             }
             allData.survey.q30 = document.getElementById('q30').value.trim();
             allData.survey.ts = Date.now();
+
+            // 🌟 將收集到的 15 張貼文順序，封裝進 survey 物件中準備送給 GAS
+            for(let i = 0; i < 15; i++) {
+                allData.survey['post' + (i + 1)] = displayedPostsOrder[i] || "";
+            }
 
             document.getElementById('screen-posttest').style.display = 'none';
             uploadAll();
