@@ -386,7 +386,7 @@
         let allData = { sid: sessionID, eye: [], survey: {} };
         
         let isRecording = false;
-        let calibAttempts = 0; // 🌟 新增變數：紀錄校正次數
+        let calibAttempts = 0; 
         let calibHits = 0;
         let isValidating = false;
         let validationSamples = [];
@@ -435,7 +435,6 @@
                 alert(`請確認教育程度皆已作答！`); return;
             }
 
-            // 🌟 Q8 的值域驗證邏輯
             let isRefused = document.getElementById('q8_refuse').checked;
             let q8y_str = document.getElementById('q8_y').value.trim();
             let q8m_str = document.getElementById('q8_m').value.trim();
@@ -533,7 +532,6 @@
             }
         }
 
-        // 🌟 校正開始與上限判定邏輯
         function startCalib() {
             calibAttempts++;
             calibHits = 0;
@@ -552,7 +550,7 @@
             document.getElementById('calib-hint').innerText = "請盯著藍點 3 秒不要動";
             document.getElementById('validation-dot').style.display = 'block';
             isValidating = true;
-            validationSamples = []; // 重置驗證樣本
+            validationSamples = []; 
             
             setTimeout(() => {
                 isValidating = false; 
@@ -563,7 +561,6 @@
                 
                 if (accuracy < 40) { 
                     if (calibAttempts >= 3) {
-                        // 🌟 第三次失敗，紀錄為「否」並強行進入實驗
                         alert("校正已達三次上限，系統將直接為您進入實驗。");
                         allData.survey.calibSuccess = "否";
                         document.getElementById('calib-hint').style.display = 'none'; 
@@ -575,7 +572,6 @@
                         startCalib(); 
                     }
                 } else { 
-                    // 🌟 成功校正，紀錄為「是」
                     allData.survey.calibSuccess = "是";
                     document.getElementById('calib-hint').style.display = 'none'; 
                     webgazer.showVideo(false); 
@@ -592,8 +588,16 @@
             activePools.G_Post = []; 
             
             let tempGList = [...gPostNumbers];
-            tempGList.forEach(gNum => {
-                let isAI = Math.random() > 0.5;
+            
+            // 隨機打亂 1 到 6 的順序 (Fisher-Yates Shuffle)
+            for (let i = tempGList.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [tempGList[i], tempGList[j]] = [tempGList[j], tempGList[i]];
+            }
+            
+            // 前 3 個加上 AI 標籤，後 3 個不加標籤，確保絕對的 3有3無
+            tempGList.forEach((gNum, index) => {
+                let isAI = (index < 3); 
                 let gImgName = isAI ? `G_Post_${gNum}_AI.png` : `G_Post_${gNum}.png`;
                 activePools.G_Post.push(`G_Post/${gImgName}`);
             });
