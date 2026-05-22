@@ -140,6 +140,7 @@
                 <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
                     民國 <input type="number" id="q8_y" style="width: 70px;" min="1" max="115" placeholder="年"> 年 
                     <input type="number" id="q8_m" style="width: 50px;" min="1" max="12" placeholder="月"> 月
+                </div>
             </div>
 
             <div class="survey-q">
@@ -444,24 +445,22 @@
                 alert(`請確認教育程度皆已作答！`); return;
             }
 
-            let isRefused = document.getElementById('q8_refuse').checked;
             let q8y_str = document.getElementById('q8_y').value.trim();
             let q8m_str = document.getElementById('q8_m').value.trim();
             
-            if(!isRefused) {
-                if(!q8y_str || !q8m_str) {
-                    alert(`請輸入出生年月（民國/月）或勾選拒答！`); return;
-                }
-                let q8y = parseInt(q8y_str);
-                let q8m = parseInt(q8m_str);
-                if (q8y < 1 || q8y > 115) {
-                    alert(`出生年份（民國）必須在 1 到 115 之間！`); return;
-                }
-                if (q8m < 1 || q8m > 12) {
-                    alert(`出生月份必須在 1 到 12 之間！`); return;
-                }
+            if(!q8y_str || !q8m_str) {
+                alert(`請輸入出生年月（民國與月份）！`); return;
             }
-            allData.survey.q8 = isRefused ? "95" : `民國${q8y_str}年${q8m_str}月`;
+            let q8y = parseInt(q8y_str);
+            let q8m = parseInt(q8m_str);
+            if (q8y < 1 || q8y > 115) {
+                alert(`出生年份（民國）必須在 1 到 115 之間！`); return;
+            }
+            if (q8m < 1 || q8m > 12) {
+                alert(`出生月份必須在 1 到 12 之間！`); return;
+            }
+            
+            allData.survey.q8 = `民國${q8y_str}年${q8m_str}月`;
 
             let q9Val = getVal('q9');
             if(q9Val === '其他') {
