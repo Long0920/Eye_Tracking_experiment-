@@ -18,7 +18,7 @@
         .survey-q h3 { margin-top: 0; font-size: 17px; margin-bottom: 15px; color: #111; line-height: 1.5; }
         .survey-q label { display: block; margin: 10px 0; cursor: pointer; font-size: 15px; padding: 5px 10px; border-radius: 6px; transition: background 0.2s;}
         .survey-q label:hover { background: #f0f4f8; }
-        .survey-q input[type="radio"] { margin-right: 12px; transform: scale(1.2); }
+        .survey-q input[type="radio"], .survey-q input[type="checkbox"] { margin-right: 12px; transform: scale(1.2); }
         .survey-q input[type="text"], .survey-q input[type="number"], .survey-q select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 15px; }
         textarea.survey-textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 15px; resize: vertical; box-sizing: border-box; }
         
@@ -47,6 +47,9 @@
         
         #validation-dot { display: none; width: 35px; height: 35px; background: #007bff; border-radius: 50%; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5500; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
         #calib-hint { display: none; position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: bold; z-index: 6000; background: rgba(255,255,255,0.9); padding: 15px 30px; border-radius: 8px; border: 2px solid #333; text-align: center; width: max-content; }
+
+        /* Q8 鎖定時的樣式 */
+        .disabled-section { opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -60,7 +63,7 @@
                 <p><strong>1. 研究目的：</strong>本研究目的是為了更深入瞭解臺灣民眾在社群媒體上的使用行為。</p>
                 <p><strong>2. 訪問對象：</strong>年滿18歲以上的臺灣公民，預計訪問100名受訪者。</p>
                 <p><strong>3. 研究過程說明：</strong>此份網路問卷將詢問您的基本資料、社群媒體使用習慣等問題。問卷結束後將進行約5分鐘的遠距眼動實驗，觀看模擬的社群媒體貼文。所有的詢問都透過填答網路問卷的方式進行，大約在10分鐘內可以完成。</p>
-                <p><strong>4. 研究風險：</strong>本研究採問卷調查法 and 遠距眼動實驗法，研究個人之特質、想法及行為，並紀錄受試者的眼動資訊，需請受試者開啟電腦鏡頭權限。您無需擔心回答之內容會被他人知曉，眼動實驗僅通過演算法紀錄眼動資料，並不會使用您的電腦鏡頭針對您面部進行錄影。而問卷填答和眼動實驗完成後送出後，後續的研究階段資料將進行「去識別化」處理，請您放心填答。</p>
+                <p><strong>4. 研究風險：</strong>本研究採問卷調查法和遠距眼動實驗法，研究個人之特質、想法及行為，並紀錄受試者的眼動資訊，需請受試者開啟電腦鏡頭權限。您無需擔心回答之內容會被他人知曉，眼動實驗僅通過演算法紀錄眼動資料，並不會使用您的電腦鏡頭針對您面部進行錄影。而問卷填答和眼動實驗完成後送出後，後續的研究階段資料將進行「去識別化」處理，請您放心填答。</p>
                 <p><strong>5. 益處：</strong>本研究目的在於更加了解台灣民眾對於社群媒體使用行為的看法，並將新興研究方法引進政治學界。</p>
                 <p><strong>6. 保密條款：</strong>問卷回收後，將採「去識別化」處理，以確保個人資料不被識別。同時，遠距眼動儀僅通過演算法偵測您在螢幕上的視線軌跡，並不會針對您的面部錄影、拍照或是紀錄虹膜等個人特質。此外，對於實驗結果研究人員將依法把任何可辨識您的身分之紀錄與您的個人隱私資料視為機密來處理，不會公開；僅將以一個研究代碼代表您的身分，此代碼不會包含可識別您個人身分的資訊。將來發表研究結果時，也將僅以整體結果呈現(例如統計圖表)，將不會洩露任何與您身份有關之資料。</p>
                 <p><strong>7. 拒絕參與／撤回問卷：</strong>您可自由決定是否參加本研究；研究過程中，您不需要任何理由，可隨時撤銷同意，退出研究，或於調查資料釋出前請求銷毀資料，且不會引起任何不愉快以及任何不良後果，即您已填答的一切資料將不會出現在本研究中，並會於您退出研究即銷毀資料。退出方式為參與研究者本人以口頭、書面或電子文字方式告知本計畫研究人員。研究主持人或研究計畫資助單位，也可能於必要時中止該研究之進行。如您中途退出或本研究中止，本研究將銷毀並不予使用您的資料。問卷填答者可隨時終止作答、於資料釋出前可撤回問卷。</p>
@@ -129,33 +132,50 @@
 
             <div class="survey-q">
                 <h3>Q7. 平均每週使用社群媒體的時間<br>請問您多常使用臉書(Facebook)？</h3>
-                <label><input type="radio" name="q7" value="從來沒有"> (01) 從來沒有</label>
-                <label><input type="radio" name="q7" value="很少"> (02) 很少</label>
-                <label><input type="radio" name="q7" value="有時"> (03) 有時</label>
-                <label><input type="radio" name="q7" value="經常"> (04) 經常</label>
+                <label><input type="radio" name="q7" value="從來沒有" onclick="toggleQ8(false)"> (01) 從來沒有</label>
+                <label><input type="radio" name="q7" value="很少" onclick="toggleQ8(true)"> (02) 很少</label>
+                <label><input type="radio" name="q7" value="有時" onclick="toggleQ8(true)"> (03) 有時</label>
+                <label><input type="radio" name="q7" value="經常" onclick="toggleQ8(true)"> (04) 經常</label>
             </div>
 
-            <div class="survey-q">
-                <h3>Q8. 出生年月<br>請問您是民國幾年幾月出生的？</h3>
-                <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
-                    民國 <input type="number" id="q8_y" style="width: 70px;" min="1" max="115" placeholder="年"> 年 
-                    <input type="number" id="q8_m" style="width: 50px;" min="1" max="12" placeholder="月"> 月
-                </div>
-            </div>
-
-            <div class="survey-q">
-                <h3>Q9. 性別<br>請問您的性別是？</h3>
-                <label><input type="radio" name="q9" value="男性" onclick="document.getElementById('q9_other_text').style.display='none'"> (1) 男性</label>
-                <label><input type="radio" name="q9" value="女性" onclick="document.getElementById('q9_other_text').style.display='none'"> (2) 女性</label>
+            <div class="survey-q" id="q8_section">
+                <h3>Q8. 請問您平時使用臉書(Facebook)主要會從事哪些活動？(可複選)</h3>
+                <label><input type="checkbox" name="q8" value="1"> 與親友聯絡或互動</label>
+                <label><input type="checkbox" name="q8" value="2"> 查看朋友或感興趣人物動態</label>
+                <label><input type="checkbox" name="q8" value="3"> 閱讀新聞或生活資訊</label>
+                <label><input type="checkbox" name="q8" value="4"> 獲取政府或公共政策資訊</label>
+                <label><input type="checkbox" name="q8" value="5"> 關注政治議題</label>
+                <label><input type="checkbox" name="q8" value="6"> 分享個人想法或生活</label>
+                <label><input type="checkbox" name="q8" value="7"> 娛樂消遣（影片、迷因等）</label>
+                <label><input type="checkbox" name="q8" value="8"> 工作或學習用途</label>
+                <label><input type="checkbox" name="q8" value="9"> 打發時間</label>
                 <label>
-                    <input type="radio" name="q9" value="其他" onclick="document.getElementById('q9_other_text').style.display='inline-block'"> (90) 其他 
-                    <input type="text" id="q9_other_text" style="display:none; width: 120px; margin-left: 10px; padding: 5px;" placeholder="請說明">
+                    <input type="checkbox" name="q8" value="10" onclick="document.getElementById('q8_other_text').style.display=this.checked?'inline-block':'none'"> 其他
+                    <input type="text" id="q8_other_text" style="display:none; width: 120px; margin-left: 10px; padding: 5px;" placeholder="請說明">
                 </label>
             </div>
 
             <div class="survey-q">
-                <h3>Q10. 教育程度<br>請問您的教育程度是什麼?</h3>
-                <select id="q10" style="width:100%; max-width:100%;">
+                <h3>Q9. 出生年月<br>請問您是民國幾年幾月出生的？</h3>
+                <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+                    民國 <input type="number" id="q9_y" style="width: 70px;" min="1" max="115" placeholder="年"> 年 
+                    <input type="number" id="q9_m" style="width: 50px;" min="1" max="12" placeholder="月"> 月
+                </div>
+            </div>
+
+            <div class="survey-q">
+                <h3>Q10. 性別<br>請問您的性別是？</h3>
+                <label><input type="radio" name="q10" value="男性" onclick="document.getElementById('q10_other_text').style.display='none'"> (1) 男性</label>
+                <label><input type="radio" name="q10" value="女性" onclick="document.getElementById('q10_other_text').style.display='none'"> (2) 女性</label>
+                <label>
+                    <input type="radio" name="q10" value="其他" onclick="document.getElementById('q10_other_text').style.display='inline-block'"> (90) 其他 
+                    <input type="text" id="q10_other_text" style="display:none; width: 120px; margin-left: 10px; padding: 5px;" placeholder="請說明">
+                </label>
+            </div>
+
+            <div class="survey-q">
+                <h3>Q11. 教育程度<br>請問您的教育程度是什麼?</h3>
+                <select id="q11" style="width:100%; max-width:100%;">
                     <option value="">請選擇</option>
                     <option value="(1)不識字">(1) 不識字</option>
                     <option value="(2)識字但未入學">(2) 識字但未入學</option>
@@ -174,9 +194,9 @@
             </div>
 
             <div class="survey-q">
-                <h3>Q11. 一般人認為自己家庭的社會地位有高低的不同，若1代表家庭的社會地位很低，10代表家庭的社會地位很高。<br>在1（很低）到10（很高）之間，請問您覺得目前您家庭的社會地位是屬於哪一個位置？</h3>
+                <h3>Q12. 一般人認為自己家庭的社會地位有高低的不同，若1代表家庭的社會地位很低，10代表家庭的社會地位很高。<br>在1（很低）到10（很高）之間，請問您覺得目前您家庭的社會地位是屬於哪一個位置？</h3>
                 <div class="scale-labels"><span>1 (很低)</span><span>10 (很高)</span></div>
-                <div class="scale-0-10-container" id="scale-q11"></div>
+                <div class="scale-0-10-container" id="scale-q12"></div>
             </div>
 
             <button class="btn" id="start-btn" onclick="initEyeTracking()">開始進入眼動實驗</button>
@@ -230,123 +250,123 @@
             <div class="survey-transition">首先，想請教您剛才閱讀的一些內容。</div>
 
             <div class="survey-q">
-                <h3>Q12. 交通部的貼文中，請問該貼文主題為何?</h3>
-                <label><input type="radio" name="q12" value="淡江大橋首周通車數"> 淡江大橋首周通車數</label>
-                <label><input type="radio" name="q12" value="最新重型機車規範"> 最新重型機車規範</label>
-                <label><input type="radio" name="q12" value="蘇花改近期工程計畫"> 蘇花改近期工程計畫</label>
-                <label><input type="radio" name="q12" value="紅燈右轉新罰則"> 紅燈右轉新罰則</label>
+                <h3>Q13. 交通部的貼文中，請問該貼文主題為何?</h3>
+                <label><input type="radio" name="q13" value="淡江大橋首周通車數"> 淡江大橋首周通車數</label>
+                <label><input type="radio" name="q13" value="最新重型機車規範"> 最新重型機車規範</label>
+                <label><input type="radio" name="q13" value="蘇花改近期工程計畫"> 蘇花改近期工程計畫</label>
+                <label><input type="radio" name="q13" value="紅燈右轉新罰則"> 紅燈右轉新罰則</label>
             </div>
 
             <div class="survey-q">
-                <h3>Q13. 經濟部的貼文中，請問該貼文主題為何?</h3>
-                <label><input type="radio" name="q13" value="近期失業率"> 近期失業率</label>
-                <label><input type="radio" name="q13" value="近期投資概況"> 近期投資概況</label>
-                <label><input type="radio" name="q13" value="近期油價消息"> 近期油價消息</label>
-                <label><input type="radio" name="q13" value="近期經濟成長"> 近期經濟成長</label>
+                <h3>Q14. 經濟部的貼文中，請問該貼文主題為何?</h3>
+                <label><input type="radio" name="q14" value="近期失業率"> 近期失業率</label>
+                <label><input type="radio" name="q14" value="近期投資概況"> 近期投資概況</label>
+                <label><input type="radio" name="q14" value="近期油價消息"> 近期油價消息</label>
+                <label><input type="radio" name="q14" value="近期經濟成長"> 近期經濟成長</label>
             </div>
 
             <div class="survey-q">
-                <h3>Q14. 內政部的貼文中，請問該貼文主題為何?</h3>
-                <label><input type="radio" name="q14" value="公布租屋補助消息"> 公布租屋補助消息</label>
-                <label><input type="radio" name="q14" value="推廣國際搜救犬日"> 推廣國際搜救犬日</label>
-                <label><input type="radio" name="q14" value="喪失菸彈因應措施"> 喪失菸彈因應措施</label>
-                <label><input type="radio" name="q14" value="健康檢查政策實施"> 健康檢查政策實施</label>
+                <h3>Q15. 內政部的貼文中，請問該貼文主題為何?</h3>
+                <label><input type="radio" name="q15" value="公布租屋補助消息"> 公布租屋補助消息</label>
+                <label><input type="radio" name="q15" value="推廣國際搜救犬日"> 推廣國際搜救犬日</label>
+                <label><input type="radio" name="q15" value="喪失菸彈因應措施"> 喪失菸彈因應措施</label>
+                <label><input type="radio" name="q15" value="健康檢查政策實施"> 健康檢查政策實施</label>
             </div>
 
             <div class="survey-q">
-                <h3>Q15. 文化部的貼文中，請問該貼文主題為何?</h3>
-                <label><input type="radio" name="q15" value="恭喜作家得獎"> 恭喜作家得獎</label>
-                <label><input type="radio" name="q15" value="邀請參與活動"> 邀請參與活動</label>
-                <label><input type="radio" name="q15" value="音樂劇活動推廣"> Musik劇活動推廣</label>
-                <label><input type="radio" name="q15" value="慶祝母親節"> 慶祝母親節</label>
+                <h3>Q16. 文化部的貼文中，請問該貼文主題為何?</h3>
+                <label><input type="radio" name="q16" value="恭喜作家得獎"> 恭喜作家得獎</label>
+                <label><input type="radio" name="q16" value="邀請參與活動"> 邀請參與活動</label>
+                <label><input type="radio" name="q16" value="音樂劇活動推廣"> 音樂劇活動推廣</label>
+                <label><input type="radio" name="q16" value="慶祝母親節"> 慶祝母親節</label>
             </div>
 
             <div class="survey-q">
-                <h3>Q16. 警政署的貼文中，請問該貼文主題為何?</h3>
-                <label><input type="radio" name="q16" value="提醒酒後勿駕車"> 提醒酒後勿駕車</label>
-                <label><input type="radio" name="q16" value="說明新型毒品樣態"> 說明新型毒品樣態</label>
-                <label><input type="radio" name="q16" value="邀請下載警政APP"> 邀請下載警政APP</label>
-                <label><input type="radio" name="q16" value="新型詐騙防治"> 新型詐騙防治</label>
+                <h3>Q17. 警政署的貼文中，請問該貼文主題為何?</h3>
+                <label><input type="radio" name="q17" value="提醒酒後勿駕車"> 提醒酒後勿駕車</label>
+                <label><input type="radio" name="q17" value="說明新型毒品樣態"> 說明新型毒品樣態</label>
+                <label><input type="radio" name="q17" value="邀請下載警政APP"> 邀請下載警政APP</label>
+                <label><input type="radio" name="q17" value="新型詐騙防治"> 新型詐騙防治</label>
             </div>
 
             <div class="survey-q">
-                <h3>Q17. 財政部的貼文中，請問該貼文主題為何?</h3>
-                <label><input type="radio" name="q17" value="提醒五月申報所得稅"> 提醒五月申報所得稅</label>
-                <label><input type="radio" name="q17" value="提醒嬰兒領取普發一萬"> 提醒嬰兒領取普發一萬</label>
-                <label><input type="radio" name="q17" value="提醒租屋補助抵稅政策"> 提醒租屋補助抵稅政策</label>
-                <label><input type="radio" name="q17" value="提醒電子化發票中獎領取"> 提醒電子化發票中獎領取</label>
+                <h3>Q18. 財政部的貼文中，請問該貼文主題為何?</h3>
+                <label><input type="radio" name="q18" value="提醒五月申報所得稅"> 提醒五月申報所得稅</label>
+                <label><input type="radio" name="q18" value="提醒嬰兒領取普發一萬"> 提醒嬰兒領取普發一萬</label>
+                <label><input type="radio" name="q18" value="提醒租屋補助抵稅政策"> 提醒租屋補助抵稅政策</label>
+                <label><input type="radio" name="q18" value="提醒電子化發票中獎領取"> 提醒電子化發票中獎領取</label>
             </div>
 
             <div class="survey-section-title" style="margin-top: 40px;">第三部分：生成式 AI 與社群行為探討</div>
             <div class="survey-transition">接下來，想請教您對於生成式人工智慧(Generative AI, 例如Chat gpt, Gemini, Cluade等等)的一些看法：</div>
 
             <div class="survey-q">
-                <h3>Q18. 請問您剛才觀看貼文時，是否有注意到部分貼文擁有「AI資訊」標籤?若有，請問剛剛的貼文標籤是下列何種?</h3>
-                <label class="img-option"><input type="radio" name="q18" value="1"> (1) <img src="Q/1.png" alt="選項1"></label>
-                <label class="img-option"><input type="radio" name="q18" value="2"> (2) <img src="Q/2.png" alt="選項2"></label>
-                <label class="img-option"><input type="radio" name="q18" value="3"> (3) <img src="Q/3.png" alt="選項3"></label>
-                <label class="img-option"><input type="radio" name="q18" value="4"> (4) <img src="Q/4.png" alt="選項4"></label>
-                <label><input type="radio" name="q18" value="5"> (5) 沒有注意到</label>
+                <h3>Q19. 請問您剛才觀看貼文時，是否有注意到部分貼文擁有「AI資訊」標籤?若有，請問剛剛的貼文標籤是下列何種?</h3>
+                <label class="img-option"><input type="radio" name="q19" value="1"> (1) <img src="Q/1.png" alt="選項1"></label>
+                <label class="img-option"><input type="radio" name="q19" value="2"> (2) <img src="Q/2.png" alt="選項2"></label>
+                <label class="img-option"><input type="radio" name="q19" value="3"> (3) <img src="Q/3.png" alt="選項3"></label>
+                <label class="img-option"><input type="radio" name="q19" value="4"> (4) <img src="Q/4.png" alt="選項4"></label>
+                <label><input type="radio" name="q19" value="5"> (5) 沒有注意到</label>
             </div>
 
             <div class="survey-q">
-                <h3>Q19. 整體而言，請問您過去一個月內有多常使用生成式人工智慧(包含生成內容、潤飾內容以及蒐集資訊等等)</h3>
-                <label><input type="radio" name="q19" value="經常"> 經常</label>
-                <label><input type="radio" name="q19" value="有時"> 有時</label>
-                <label><input type="radio" name="q19" value="很少"> 很少</label>
-                <label><input type="radio" name="q19" value="從不"> 從不</label>
+                <h3>Q20. 整體而言，請問您過去一個月內有多常使用生成式人工智慧(包含生成內容、潤飾內容以及蒐集資訊等等)</h3>
+                <label><input type="radio" name="q20" value="經常"> 經常</label>
+                <label><input type="radio" name="q20" value="有時"> 有時</label>
+                <label><input type="radio" name="q20" value="很少"> 很少</label>
+                <label><input type="radio" name="q20" value="從不"> 從不</label>
             </div>
 
             <div class="survey-q">
-                <h3>Q20. 請問您是否有購買付費版生成式人工智慧服務(例如chat gpt plus、Gemini pro、Cluade pro等等)</h3>
-                <label><input type="radio" name="q20" value="有"> 有</label>
-                <label><input type="radio" name="q20" value="曾經有，現在沒有"> 曾經有，現在沒有</label>
-                <label><input type="radio" name="q20" value="沒有"> 沒有</label>
+                <h3>Q21. 請問您是否有購買付費版生成式人工智慧服務(例如chat gpt plus、Gemini pro、Cluade pro等等)</h3>
+                <label><input type="radio" name="q21" value="有"> 有</label>
+                <label><input type="radio" name="q21" value="曾經有，現在沒有"> 曾經有，現在沒有</label>
+                <label><input type="radio" name="q21" value="沒有"> 沒有</label>
             </div>
 
             <div class="survey-q">
-                <h3>Q21. 整體而言，請問您對於生成式人工智慧生成的內容的是非常信任、有點信任、不太信任還是一點也不信任</h3>
-                <label><input type="radio" name="q21" value="非常信任"> 非常信任</label>
-                <label><input type="radio" name="q21" value="有點信任"> 有點信任</label>
-                <label><input type="radio" name="q21" value="不太信任"> 不太信任</label>
-                <label><input type="radio" name="q21" value="一點也不信任"> 一點也不信任</label>
+                <h3>Q22. 整體而言，請問您對於生成式人工智慧生成的內容的是非常信任、有點信任、不太信任還是一點也不信任</h3>
+                <label><input type="radio" name="q22" value="非常信任"> 非常信任</label>
+                <label><input type="radio" name="q22" value="有點信任"> 有點信任</label>
+                <label><input type="radio" name="q22" value="不太信任"> 不太信任</label>
+                <label><input type="radio" name="q22" value="一點也不信任"> 一點也不信任</label>
             </div>
 
             <div class="survey-transition" style="margin-top: 30px;">關於以下說法，若0是非常不同意、10是非常同意，請問關於下列說法，0到10您會選擇多少?</div>
 
             <div class="survey-q">
-                <h3>Q22. AI 會改善我的生活。</h3>
-                <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
-                <div class="scale-0-10-container" id="scale-q22"></div>
-            </div>
-
-            <div class="survey-q">
-                <h3>Q23. AI 會改善我的工作。</h3>
+                <h3>Q23. AI 會改善我的生活。</h3>
                 <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
                 <div class="scale-0-10-container" id="scale-q23"></div>
             </div>
 
             <div class="survey-q">
-                <h3>Q24. 我未來會使用 AI。</h3>
+                <h3>Q24. AI 會改善我的工作。</h3>
                 <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
                 <div class="scale-0-10-container" id="scale-q24"></div>
             </div>
 
             <div class="survey-q">
-                <h3>Q25. AI 對人類有利。</h3>
+                <h3>Q25. 我未來會使用 AI。</h3>
                 <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
                 <div class="scale-0-10-container" id="scale-q25"></div>
             </div>
 
-            <div class="survey-q" style="margin-top: 40px; border-top: 3px solid #1a73e8;">
-                <h3>Q26. 不同的人在社群媒體上可能有不同的使用行為。當政府的社群貼文出現在瀏覽頁面時，有些人會迅速略過 these 貼文；也有些人會仔細觀看貼文內容。當您瀏覽社群媒體時，若政府的社群貼文出現在您的瀏覽頁面時，請問您通常會迅速略過還是會仔細觀看?</h3>
-                <div class="scale-labels"><span>0 (迅速略過)</span><span>10 (仔細觀看)</span></div>
+            <div class="survey-q">
+                <h3>Q26. AI 對人類有利。</h3>
+                <div class="scale-labels"><span>0 (非常不同意)</span><span>10 (非常同意)</span></div>
                 <div class="scale-0-10-container" id="scale-q26"></div>
             </div>
 
+            <div class="survey-q" style="margin-top: 40px; border-top: 3px solid #1a73e8;">
+                <h3>Q27. 不同的人在社群媒體上可能有不同的使用行為。當政府的社群貼文出現在瀏覽頁面時，有些人會迅速略過這些貼文；也有些人會仔細觀看貼文內容。當您瀏覽社群媒體時，若政府的社群貼文出現在您的瀏覽頁面時，請問您通常會迅速略過還是會仔細觀看?</h3>
+                <div class="scale-labels"><span>0 (迅速略過)</span><span>10 (仔細觀看)</span></div>
+                <div class="scale-0-10-container" id="scale-q27"></div>
+            </div>
+
             <div class="survey-q" style="margin-top: 40px; background: #fffcf0; border: 1px solid #ffd54f;">
-                <h3>Q27. 對於本研究的建議 (選填)：</h3>
-                <textarea id="q27" name="q27" rows="4" class="survey-textarea" placeholder="請在此輸入您的建議..."></textarea>
+                <h3>Q28. 對於本研究的建議 (選填)：</h3>
+                <textarea id="q28" name="q28" rows="4" class="survey-textarea" placeholder="請在此輸入您的建議..."></textarea>
             </div>
 
             <button class="btn" onclick="finalSubmit()" style="margin-bottom: 50px;">提交問卷並結束</button>
@@ -364,6 +384,26 @@
         // 🌟🌟🌟 請將此處換成您最新部署的 GAS Web App 網址 🌟🌟🌟
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec"; 
 
+        // 🌟 Q8 跳題邏輯函數 🌟
+        function toggleQ8(enable) {
+            const q8Section = document.getElementById('q8_section');
+            const checkboxes = q8Section.querySelectorAll('input[type="checkbox"]');
+            const otherText = document.getElementById('q8_other_text');
+            
+            if (enable) {
+                q8Section.classList.remove('disabled-section');
+                checkboxes.forEach(cb => cb.disabled = false);
+            } else {
+                q8Section.classList.add('disabled-section');
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                    cb.disabled = true;
+                });
+                otherText.value = "";
+                otherText.style.display = 'none';
+            }
+        }
+
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -380,8 +420,9 @@
         }
         
         document.addEventListener("DOMContentLoaded", () => {
-            document.getElementById('scale-q11').innerHTML = generateScaleHTML('q11', 1, 10);
-            for(let i=22; i<=26; i++) {
+            // 🌟 題號已變更
+            document.getElementById('scale-q12').innerHTML = generateScaleHTML('q12', 1, 10);
+            for(let i=23; i<=27; i++) {
                 document.getElementById(`scale-q${i}`).innerHTML = generateScaleHTML(`q${i}`, 0, 10);
             }
         });
@@ -435,41 +476,46 @@
         }
 
         async function initEyeTracking() {
-            let reqFields = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q9', 'q11'];
+            // 🌟 檢查選擇題 (Q1-Q7, Q10)
+            let reqFields = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q10'];
             for(let f of reqFields) {
                 if(!getVal(f)) { alert(`請確認所有選擇題皆已作答！`); return; }
             }
-            if(!document.getElementById('q10').value) {
-                alert(`請確認教育程度皆已作答！`); return;
+            if(!document.getElementById('q11').value) {
+                alert(`請確認教育程度(Q11)皆已作答！`); return;
+            }
+            if(!getVal('q12')) {
+                alert(`請確認社會地位量表(Q12)皆已作答！`); return;
             }
 
-            let q8y_str = document.getElementById('q8_y').value.trim();
-            let q8m_str = document.getElementById('q8_m').value.trim();
-            
-            if(!q8y_str || !q8m_str) {
+            // 🌟 檢查 Q8 複選題 (如果 Q7 不是從來沒有)
+            let q7Val = getVal('q7');
+            if (q7Val !== "從來沒有") {
+                let q8Checked = document.querySelectorAll('input[name="q8"]:checked');
+                if (q8Checked.length === 0) {
+                    alert(`請至少勾選一項 Q8 臉書活動！`); return;
+                }
+                // 檢查是否勾了其他卻沒寫字
+                let otherBox = document.querySelector('input[name="q8"][value="10"]');
+                if(otherBox && otherBox.checked) {
+                    if(!document.getElementById('q8_other_text').value.trim()){
+                        alert(`請在 Q8「其他」欄位填寫說明！`); return;
+                    }
+                }
+            }
+
+            // 🌟 檢查 Q9 出生年月
+            let q9y_str = document.getElementById('q9_y').value.trim();
+            let q9m_str = document.getElementById('q9_m').value.trim();
+            if(!q9y_str || !q9m_str) {
                 alert(`請輸入出生年月（民國與月份）！`); return;
             }
-            let q8y = parseInt(q8y_str);
-            let q8m = parseInt(q8m_str);
-            if (q8y < 1 || q8y > 115) {
-                alert(`出生年份（民國）必須在 1 到 115 之間！`); return;
-            }
-            if (q8m < 1 || q8m > 12) {
-                alert(`出生月份必須在 1 到 12 之間！`); return;
-            }
-            allData.survey.q8 = `民國${q8y_str}年${q8m_str}月`;
+            let q9y = parseInt(q9y_str);
+            let q9m = parseInt(q9m_str);
+            if (q9y < 1 || q9y > 115) { alert(`出生年份（民國）必須在 1 到 115 之間！`); return; }
+            if (q9m < 1 || q9m > 12) { alert(`出生月份必須在 1 到 12 之間！`); return; }
 
-            let q9Val = getVal('q9');
-            if(q9Val === '其他') {
-                let otherText = document.getElementById('q9_other_text').value.trim();
-                if(!otherText) {
-                    alert("請在「其他」欄位填寫您的性別！"); return;
-                }
-                allData.survey.q9 = `其他(${otherText})`;
-            } else {
-                allData.survey.q9 = q9Val;
-            }
-
+            // ---------------- 資料封裝 ----------------
             allData.survey.q1 = getVal('q1');
             allData.survey.q2 = getVal('q2');
             allData.survey.q3 = getVal('q3');
@@ -477,9 +523,35 @@
             allData.survey.q5 = getVal('q5');
             allData.survey.q6 = getVal('q6');
             allData.survey.q7 = getVal('q7');
-            allData.survey.q10 = document.getElementById('q10').value;
-            allData.survey.q11 = getVal('q11');
 
+            // 🌟 處理 Q8 拆分 10 個欄位
+            for(let i=1; i<=10; i++) {
+                allData.survey['q8_' + i] = "無"; // 預設為無
+            }
+            if (q7Val !== "從來沒有") {
+                let q8Checked = document.querySelectorAll('input[name="q8"]:checked');
+                q8Checked.forEach(cb => {
+                    if(cb.value === "10") {
+                        allData.survey['q8_10'] = "有(" + document.getElementById('q8_other_text').value.trim() + ")";
+                    } else {
+                        allData.survey['q8_' + cb.value] = "有";
+                    }
+                });
+            }
+
+            allData.survey.q9 = `民國${q9y_str}年${q9m_str}月`;
+
+            let q10Val = getVal('q10');
+            if(q10Val === '其他') {
+                allData.survey.q10 = `其他(${document.getElementById('q10_other_text').value.trim()})`;
+            } else {
+                allData.survey.q10 = q10Val;
+            }
+
+            allData.survey.q11 = document.getElementById('q11').value;
+            allData.survey.q12 = getVal('q12');
+
+            // ---------------- 啟動眼動 ----------------
             const btn = document.getElementById('start-btn');
             btn.innerText = "相機初始化中，請稍候..."; btn.disabled = true;
 
@@ -564,14 +636,13 @@
                 let avgDist = validationSamples.reduce((a, b) => a + b, 0) / validationSamples.length;
                 let accuracy = Math.max(0, Math.round(100 - (avgDist / 4)));
                 
-                // 🌟 校正完成後的跳轉逻辑：改為先彈出指導語畫面，避免受試者恐慌
                 if (accuracy < 40) { 
                     if (calibAttempts >= 3) {
                         allData.survey.calibSuccess = "否";
                         document.getElementById('calib-hint').style.display = 'none'; 
                         webgazer.showVideo(false); 
                         prepareImageQueue(); 
-                        showExperimentInstruction(); // 👈 跳轉至提醒指導語
+                        showExperimentInstruction(); 
                     } else {
                         alert(`視線偏移較大，請保持頭部穩定並重新校正 (第 ${calibAttempts} 次，最多 3 次)`); 
                         startCalib(); 
@@ -581,17 +652,15 @@
                     document.getElementById('calib-hint').style.display = 'none'; 
                     webgazer.showVideo(false); 
                     prepareImageQueue(); 
-                    showExperimentInstruction(); // 👈 跳轉至提醒指導語
+                    showExperimentInstruction(); 
                 }
             }, 3000);
         }
 
-        // 🌟 新增：顯示中介指導語函數
         function showExperimentInstruction() {
             document.getElementById('screen-experiment-instruction').style.display = 'flex';
         }
 
-        // 🌟 新增：當受試者看完指導語，點擊按鈕才正式渲染並播映貼文
         function startFormalExperimentPost() {
             document.getElementById('screen-experiment-instruction').style.display = 'none';
             loadRound(); 
@@ -676,14 +745,15 @@
         }
 
         function finalSubmit() {
+            // 🌟 後測題號已變更為 Q13 - Q27
             let reqFields = [];
-            for(let i=12; i<=26; i++) { reqFields.push(`q${i}`); }
+            for(let i=13; i<=27; i++) { reqFields.push(`q${i}`); }
             
             for(let f of reqFields) {
                 if(!getVal(f)) { alert(`請確認所有選擇題皆已完成作答！（您尚未作答 ${f.toUpperCase()}）`); return; }
                 allData.survey[f] = getVal(f);
             }
-            allData.survey.q27 = document.getElementById('q27').value.trim();
+            allData.survey.q28 = document.getElementById('q28').value.trim();
             allData.survey.ts = Date.now();
             allData.survey.sid = sessionID;
 
@@ -706,9 +776,15 @@
                     headers: { 'Content-Type': 'text/plain' }, 
                     body: payload 
                 });
-                document.getElementById('status').innerText = "✅ 上傳成功！感謝您的參與！本研究所呈現之政府機關貼文，皆係修改自真實政府社群動態；其餘各類型貼文則由生成式人工智慧模擬生成。所有數據僅供學術分析，再次感謝您的協助！";
-                document.getElementById('status').style.color = "green";
-                document.getElementById('status').style.fontWeight = "bold";
+                
+                // 🌟 使用最嚴謹版的 Debriefing 提示
+                document.getElementById('status').innerHTML = `
+                    <span style="color: green; font-size: 22px;">✅ 上傳成功！感謝您的參與</span><br><br>
+                    <div style="text-align: left; background: #f0f4f8; padding: 20px; border-radius: 8px; border-left: 5px solid #1a73e8; font-size: 16px; line-height: 1.6; color:#444;">
+                        <strong>【研究事後說明 (Debriefing)】</strong><br>
+                        本研究所呈現之政府機關貼文，皆係修改自真實世界的政府社群動態；其餘各類型貼文（如商業廣告、日常動態、公眾人物）則由生成式人工智慧（Generative AI）模擬生成。所有數據僅供學術分析，請安心關閉視窗，再次感謝您的協助！
+                    </div>
+                `;
             } catch (err) {
                 document.getElementById('status').innerText = "❌ 上傳失敗，請稍後再試或聯絡研究人員。";
                 document.getElementById('status').style.color = "red";
