@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8">
-    <title>社群媒體研究</title>
+    <title>社群媒體研究 - 政治大學政治學系</title>
     <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background: #f0f2f5; color: #333; overflow-x: hidden; }
@@ -70,10 +70,17 @@
                 <hr>
                 <p>若您想詢問本研究／問卷內容，或有興趣得知研究成果，歡迎您依照下述方式聯繫研究團隊：<br>聯絡人：陳逸龍碩士生<br>電子信箱：113252001@nccu.edu.tw</p>
             </div>
+            
             <div class="survey-q" style="background: #eef2fb; border: 2px solid #1a73e8; box-shadow: none;">
-                <h3 style="color: #1a73e8;">您是否完整閱讀前述內容、了解您的權益，並且願意參與本實驗?</h3>
+                <h3 style="color: #1a73e8; margin-bottom: 10px;">您是否完整閱讀前述內容、了解您的權益，並且願意參與本實驗?</h3>
                 <label style="font-weight: bold;"><input type="checkbox" id="consent-check"> 我已完整了解自身權益，並且同意參與本實驗</label>
             </div>
+
+            <div class="survey-q" style="background: #fffcf0; border: 2px solid #fbbc05; box-shadow: none;">
+                <h3 style="color: #ea4335; margin-bottom: 10px;">設備確認：本研究須請您使用帶有鏡頭的電腦進行填答，請問您現在是否使用帶有鏡頭的電腦開啟本問卷？</h3>
+                <label style="font-weight: bold;"><input type="radio" name="camera-check" id="camera-check" value="是"> 是的，我目前使用帶有鏡頭的電腦</label>
+            </div>
+
             <button class="btn" onclick="goToPreTest()">進入前測問卷</button>
         </div>
     </div>
@@ -384,7 +391,7 @@
         // 🌟🌟🌟 請將此處換成您最新部署的 GAS Web App 網址 🌟🌟🌟
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz1UL0gh1tWBS22nOqtj9I3ILQICcyMk4nuimus7dsi1vwrkA6ONcdY308-FBOBhHDv/exec"; 
 
-        // 🌟 Q8 跳題邏輯函數 🌟
+        // Q8 跳題邏輯函數
         function toggleQ8(enable) {
             const q8Section = document.getElementById('q8_section');
             const checkboxes = q8Section.querySelectorAll('input[type="checkbox"]');
@@ -420,7 +427,6 @@
         }
         
         document.addEventListener("DOMContentLoaded", () => {
-            // 🌟 題號已變更
             document.getElementById('scale-q12').innerHTML = generateScaleHTML('q12', 1, 10);
             for(let i=23; i<=27; i++) {
                 document.getElementById(`scale-q${i}`).innerHTML = generateScaleHTML(`q${i}`, 0, 10);
@@ -471,12 +477,15 @@
             if(!document.getElementById('consent-check').checked) {
                 alert("請先勾選知情同意書。"); return;
             }
+            // 🌟 檢查設備確認選項
+            if(!document.getElementById('camera-check').checked) {
+                alert("本研究必須使用帶有鏡頭的電腦，請確認並勾選設備確認選項。"); return;
+            }
             document.getElementById('screen-consent').style.display = 'none';
             document.getElementById('screen-pretest').style.display = 'flex';
         }
 
         async function initEyeTracking() {
-            // 🌟 檢查選擇題 (Q1-Q7, Q10)
             let reqFields = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q10'];
             for(let f of reqFields) {
                 if(!getVal(f)) { alert(`請確認所有選擇題皆已作答！`); return; }
@@ -488,14 +497,12 @@
                 alert(`請確認社會地位量表(Q12)皆已作答！`); return;
             }
 
-            // 🌟 檢查 Q8 複選題 (如果 Q7 不是從來沒有)
             let q7Val = getVal('q7');
             if (q7Val !== "從來沒有") {
                 let q8Checked = document.querySelectorAll('input[name="q8"]:checked');
                 if (q8Checked.length === 0) {
                     alert(`請至少勾選一項 Q8 臉書活動！`); return;
                 }
-                // 檢查是否勾了其他卻沒寫字
                 let otherBox = document.querySelector('input[name="q8"][value="10"]');
                 if(otherBox && otherBox.checked) {
                     if(!document.getElementById('q8_other_text').value.trim()){
@@ -504,7 +511,6 @@
                 }
             }
 
-            // 🌟 檢查 Q9 出生年月
             let q9y_str = document.getElementById('q9_y').value.trim();
             let q9m_str = document.getElementById('q9_m').value.trim();
             if(!q9y_str || !q9m_str) {
@@ -515,7 +521,6 @@
             if (q9y < 1 || q9y > 115) { alert(`出生年份（民國）必須在 1 到 115 之間！`); return; }
             if (q9m < 1 || q9m > 12) { alert(`出生月份必須在 1 到 12 之間！`); return; }
 
-            // ---------------- 資料封裝 ----------------
             allData.survey.q1 = getVal('q1');
             allData.survey.q2 = getVal('q2');
             allData.survey.q3 = getVal('q3');
@@ -524,9 +529,8 @@
             allData.survey.q6 = getVal('q6');
             allData.survey.q7 = getVal('q7');
 
-            // 🌟 處理 Q8 拆分 10 個欄位
             for(let i=1; i<=10; i++) {
-                allData.survey['q8_' + i] = "無"; // 預設為無
+                allData.survey['q8_' + i] = "無";
             }
             if (q7Val !== "從來沒有") {
                 let q8Checked = document.querySelectorAll('input[name="q8"]:checked');
@@ -551,7 +555,6 @@
             allData.survey.q11 = document.getElementById('q11').value;
             allData.survey.q12 = getVal('q12');
 
-            // ---------------- 啟動眼動 ----------------
             const btn = document.getElementById('start-btn');
             btn.innerText = "相機初始化中，請稍候..."; btn.disabled = true;
 
@@ -745,7 +748,6 @@
         }
 
         function finalSubmit() {
-            // 🌟 後測題號已變更為 Q13 - Q27
             let reqFields = [];
             for(let i=13; i<=27; i++) { reqFields.push(`q${i}`); }
             
@@ -777,12 +779,11 @@
                     body: payload 
                 });
                 
-                // 🌟 使用最嚴謹版的 Debriefing 提示
                 document.getElementById('status').innerHTML = `
                     <span style="color: green; font-size: 22px;">✅ 上傳成功！感謝您的參與</span><br><br>
                     <div style="text-align: left; background: #f0f4f8; padding: 20px; border-radius: 8px; border-left: 5px solid #1a73e8; font-size: 16px; line-height: 1.6; color:#444;">
-                        <strong>【研究事後說明】</strong><br>
-                        本研究所呈現之政府機關貼文，皆係修改自真實世界的政府社群動態；其餘各類型貼文則由生成式人工智慧生成。所有數據僅供學術分析，再次感謝您的協助！
+                        <strong>【研究事後說明 (Debriefing)】</strong><br>
+                        本研究所呈現之政府機關貼文，皆係修改自真實世界的政府社群動態；其餘各類型貼文（如商業廣告、日常動態、公眾人物）則由生成式人工智慧（Generative AI）模擬生成。所有數據僅供學術分析，請安心關閉視窗，再次感謝您的協助！
                     </div>
                 `;
             } catch (err) {
